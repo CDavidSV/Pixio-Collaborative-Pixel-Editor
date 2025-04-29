@@ -1,15 +1,13 @@
 package api
 
 import (
-	"github.com/CDavidSV/Pixio/data"
 	"github.com/CDavidSV/Pixio/handlers"
-	"github.com/CDavidSV/Pixio/services"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 )
 
-func (s *Server) loadRoutes(queries *data.Queries, services *services.Services) *chi.Mux {
-	handlers := handlers.NewHandler(queries, services)
+func (s *Server) loadRoutes() *chi.Mux {
+	handlers := handlers.NewHandler(s.queries, s.services)
 
 	r := chi.NewRouter()
 

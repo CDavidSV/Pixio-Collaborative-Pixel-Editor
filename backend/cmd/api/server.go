@@ -15,25 +15,27 @@ import (
 )
 
 type Server struct {
-	addr string
-	pool *pgxpool.Pool
+	addr     string
+	queries  *data.Queries
+	services *services.Services
 }
 
 func NewServer(addr string, pool *pgxpool.Pool) *Server {
+	queries := data.NewQueries(pool)          // Data layer
+	services := services.NewServices(queries) // Business logic layer
+
 	return &Server{
-		addr: addr,
-		pool: pool,
+		addr:     addr,
+		queries:  queries,
+		services: services,
 	}
 }
 
 func (s *Server) Start() error {
-	queries := data.NewQueries(s.pool)        // Data layer
-	services := services.NewServices(queries) // Business logic layer
-
 	r := chi.NewRouter()
-	r.Mount("/api/v1", s.loadRoutes(queries, services))
+	r.Mount("/api/v1", s.loadRoutes())
 
-	appMiddleware := middlewares.NewMiddleware(queries, services)
+	appMiddleware := middlewares.NewMiddleware(s.queries, s.services)
 
 	// Middleware
 	r.Use(middleware.Recoverer)
