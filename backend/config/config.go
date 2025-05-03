@@ -36,6 +36,8 @@ var (
 		MaxAge:           300,
 	}
 
-	RefreshTokenExpiration = 30 * 24 * 60 * 60 * 1000 // 30 days in milliseconds
-	AccessTokenExpiration  = 15 * 60 * 1000           // 15 minutes in milliseconds
+	SessionExpiration     = 30 * 24 * 60 * 60 * 1000 // 30 days in milliseconds
+	AccessTokenExpiration = 15 * 60 * 1000           // 15 minutes in milliseconds
+	AccessTokenSecret     = os.Getenv("ACCESS_TOKEN_SECRET")
+	RefreshTokenSecret    = os.Getenv("REFRESH_TOKEN_SECRET")
 )

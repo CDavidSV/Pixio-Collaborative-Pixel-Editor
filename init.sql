@@ -105,7 +105,7 @@ create table user_sessions (
     expires_at timestamptz not null,
     refresh_token text not null,
     created_at timestamptz default now(),
-    last_accesed timestamptz default now(),
+    last_accessed timestamptz default now(),
 
     foreign key(user_id) references users(user_id)
 );

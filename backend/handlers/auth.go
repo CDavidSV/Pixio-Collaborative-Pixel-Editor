@@ -32,8 +32,14 @@ func (h *Handler) Signup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	hashedPassword, err := h.services.AuthService.HashPassword(userSignupDTO.Password)
+	if err != nil {
+		utils.ServerError(w, r, err, "Failed to hash password")
+		return
+	}
+
 	// Attempt to create the user
-	user, err := h.queries.User.CreateUser(userSignupDTO.Username, userSignupDTO.Email, userSignupDTO.Password)
+	user, err := h.queries.User.CreateUser(userSignupDTO.Username, userSignupDTO.Email, hashedPassword)
 	if err != nil {
 		utils.ServerError(w, r, err, "Failed to create user")
 		return
@@ -47,7 +53,7 @@ func (h *Handler) Signup(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Set refresh token cookie
-	utils.SetCookie(w, "refresh_token", session.RefreshToken, session.ExpiresAt) // 30 days
+	utils.SetCookie(w, "refresh_token", session.RefreshToken, int(session.ExpiresAt)) // 30 days
 	utils.WriteJSON(w, http.StatusCreated, types.Map{
 		"token":      session.AccessToken,
 		"expires_at": session.AccessTokenExpiresAt,
@@ -77,8 +83,8 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Attempt to authenticate the user
-	err = h.services.AuthService.Authenticate(userLoginDTO.Email, userLoginDTO.Password)
+	// Check if the user exists
+	user, err := h.queries.User.GetUserByEmail(userLoginDTO.Email)
 	if err != nil {
 		utils.WriteJSON(w, http.StatusUnauthorized, types.ErrorResponse{
 			Error: "Invalid email or password",
@@ -86,15 +92,23 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Attempt to authenticate the user
+	if !h.services.AuthService.ValidPassword(userLoginDTO.Password, user.HashedPassword) {
+		utils.WriteJSON(w, http.StatusUnauthorized, types.ErrorResponse{
+			Error: "Invalid email or password",
+		})
+		return
+	}
+
 	// Start a session for the user
-	session, err := h.services.AuthService.CreateSession(userLoginDTO.Email)
+	session, err := h.services.AuthService.CreateSession(user.ID)
 	if err != nil {
 		utils.ServerError(w, r, err, "Failed to create session")
 		return
 	}
 
 	// Set refresh token cookie
-	utils.SetCookie(w, "refresh_token", session.RefreshToken, session.ExpiresAt) // 30 days
+	utils.SetCookie(w, "refresh_token", session.RefreshToken, int(session.ExpiresAt/1000)) // 30 days
 	utils.WriteJSON(w, http.StatusOK, types.Map{
 		"token":      session.AccessToken,
 		"expires_at": session.AccessTokenExpiresAt,

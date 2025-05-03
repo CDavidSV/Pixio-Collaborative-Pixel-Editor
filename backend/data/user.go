@@ -13,6 +13,6 @@ func (q *UserQueries) CreateUser(username, email, password string) (types.User, 
 	return types.User{}, nil
 }
 
-func (q *UserQueries) GetUserHashedPassword(email string) (string, error) {
-	return "", nil
+func (q *UserQueries) GetUserByEmail(email string) (types.User, error) {
+	return types.User{}, nil
 }

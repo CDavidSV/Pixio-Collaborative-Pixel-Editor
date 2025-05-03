@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
+
+	"github.com/oklog/ulid/v2"
 )
 
 func ServerError(w http.ResponseWriter, r *http.Request, err error, msg string) {
@@ -39,4 +41,9 @@ func SetCookie(w http.ResponseWriter, name, value string, maxAge int) {
 	}
 
 	http.SetCookie(w, cookie)
+}
+
+func GenerateID() string {
+	id := ulid.Make()
+	return id.String()
 }
