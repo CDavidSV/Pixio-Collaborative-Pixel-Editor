@@ -6,6 +6,7 @@ import (
 
 	"github.com/CDavidSV/Pixio/config"
 	"github.com/CDavidSV/Pixio/data"
+	"github.com/CDavidSV/Pixio/handlers"
 	"github.com/CDavidSV/Pixio/middlewares"
 	"github.com/CDavidSV/Pixio/services"
 	"github.com/go-chi/chi/v5"
@@ -35,6 +36,7 @@ func (s *Server) Start() error {
 	r := chi.NewRouter()
 
 	appMiddleware := middlewares.NewMiddleware(s.queries, s.services)
+	handlers := handlers.NewHandler(s.queries, s.services)
 
 	// Middleware
 	r.Use(middleware.Recoverer)
@@ -44,7 +46,7 @@ func (s *Server) Start() error {
 	r.Use(appMiddleware.CommonHeaders)
 
 	// Mount routes
-	r.Mount("/api/v1", s.loadRoutes())
+	r.Mount("/api/v1", s.loadRoutes(handlers, appMiddleware))
 
 	server := &http.Server{
 		Addr:         s.addr,

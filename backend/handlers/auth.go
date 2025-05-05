@@ -9,7 +9,7 @@ import (
 	"github.com/CDavidSV/Pixio/validator"
 )
 
-func (h *Handler) Signup(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) SignupPost(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
 		utils.ServerError(w, r, err, "Failed to parse form")
@@ -69,7 +69,7 @@ func (h *Handler) Signup(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) LoginPost(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
 		utils.ServerError(w, r, err, "Failed to parse form")
@@ -124,7 +124,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (h *Handler) Token(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) TokenPost(w http.ResponseWriter, r *http.Request) {
 	refreshToken, err := r.Cookie("rt")
 	if err != nil {
 		if errors.Is(err, http.ErrNoCookie) {
@@ -168,7 +168,7 @@ func (h *Handler) Token(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) LogoutPost(w http.ResponseWriter, r *http.Request) {
 	refreshToken, err := r.Cookie("rt")
 	if err != nil {
 		if errors.Is(err, http.ErrNoCookie) {
