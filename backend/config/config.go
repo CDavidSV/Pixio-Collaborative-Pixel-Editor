@@ -3,6 +3,7 @@ package config
 import (
 	"log"
 	"os"
+	"time"
 
 	"github.com/go-chi/cors"
 	"github.com/joho/godotenv"
@@ -15,6 +16,8 @@ func init() {
 	}
 
 	DSN = os.Getenv("DATABASE_URL")
+	AccessTokenSecret = os.Getenv("ACCESS_TOKEN_SECRET")
+	RefreshTokenSecret = os.Getenv("REFRESH_TOKEN_SECRET")
 }
 
 var (
@@ -24,10 +27,11 @@ var (
   / /_/ /  / /   | |/_/  / /  / __ \         / /| |  / /_/ /   / /
  / ____/  / /   _>  <   / /  / /_/ /        / ___ | / ____/  _/ /
 /_/      /_/   /_/|_|  /_/   \____/        /_/  |_|/_/      /___/
-
 `
-	DSN        string
-	CorsConfig = cors.Options{
+	DSN                string
+	AccessTokenSecret  string
+	RefreshTokenSecret string
+	CorsConfig         = cors.Options{
 		AllowedOrigins:   []string{"*"},
 		AllowedMethods:   []string{"GET", "POST", "DELETE", "HEAD", "OPTION", "PUT"},
 		AllowedHeaders:   []string{"User-Agent", "Content-Type", "Accept", "Accept-Encoding", "Accept-Language", "Cache-Control", "Connection", "DNT", "Host", "Origin", "Pragma", "Referer", "Cookie"},
@@ -36,8 +40,6 @@ var (
 		MaxAge:           300,
 	}
 
-	SessionExpiration     = 30 * 24 * 60 * 60 * 1000 // 30 days in milliseconds
-	AccessTokenExpiration = 15 * 60 * 1000           // 15 minutes in milliseconds
-	AccessTokenSecret     = os.Getenv("ACCESS_TOKEN_SECRET")
-	RefreshTokenSecret    = os.Getenv("REFRESH_TOKEN_SECRET")
+	SessionExpiration     = time.Hour * 24 * 30 // 30 days
+	AccessTokenExpiration = time.Minute * 15    // 15 minutes
 )

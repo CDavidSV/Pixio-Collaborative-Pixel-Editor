@@ -1,6 +1,7 @@
 package services
 
 import (
+	"errors"
 	"time"
 
 	"github.com/CDavidSV/Pixio/config"
@@ -38,23 +39,108 @@ func (s *AuthService) CreateSession(userID string) (types.UserSession, error) {
 		UserID:               session.UserID,
 		RefreshToken:         refreshToken,
 		AccessToken:          accessToken,
-		AccessTokenExpiresAt: accessExpiration.Unix(),
-		ExpiresAt:            refreshExpiration.Unix(),
+		CreatedAt:            session.CreatedAt,
+		AccessTokenExpiresAt: accessExpiration,
+		ExpiresAt:            refreshExpiration,
 	}, nil
 }
 
 func (s *AuthService) HashPassword(password string) (string, error) {
-	b, err := bcrypt.GenerateFromPassword([]byte(password), 14)
+	b, err := bcrypt.GenerateFromPassword([]byte(password), 12)
 	return string(b), err
 }
 
-func (s *AuthService) ValidPassword(password, hash string) bool {
-	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+func (s *AuthService) ValidPassword(inputPassword, hashedPassword string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(inputPassword))
 	return err == nil
 }
 
-func (s *AuthService) GenerateAccessToken(expiresMs int) (string, time.Time, error) {
-	expiration := time.Now().Add(time.Duration(expiresMs) * time.Millisecond)
+func (s *AuthService) CloseSession(refreshToken string) error {
+	// Verify refresh token
+	token, err := jwt.Parse(refreshToken, func(token *jwt.Token) (any, error) {
+		return []byte(config.RefreshTokenSecret), nil
+	})
+
+	if err != nil || !token.Valid {
+		return types.ErrInvalidToken
+	}
+
+	claims := token.Claims.(jwt.MapClaims)
+	sessionID, ok := claims["session_id"].(string)
+	if !ok {
+		return types.ErrInvalidToken
+	}
+
+	return s.queries.Session.DeleteSession(sessionID)
+}
+
+func (s *AuthService) RevalidateSession(refreshToken string) (types.UserSession, error) {
+	// Verify refresh token
+	token, err := jwt.Parse(refreshToken, func(token *jwt.Token) (any, error) {
+		return []byte(config.RefreshTokenSecret), nil
+	})
+
+	if err != nil || !token.Valid {
+		return types.UserSession{}, types.ErrInvalidToken
+	}
+
+	claims := token.Claims.(jwt.MapClaims)
+	sessionID, ok := claims["session_id"].(string)
+	if !ok {
+		return types.UserSession{}, types.ErrInvalidToken
+	}
+
+	session, err := s.queries.Session.GetSession(sessionID)
+	if err != nil {
+		if errors.Is(err, types.ErrSessionNotFound) {
+			// Close all sessions
+			s.queries.Session.DeleteAllSessions(session.UserID)
+		}
+
+		return types.UserSession{}, err
+	}
+
+	// Check if the refresh token matches the one in the database
+	if session.RefreshToken != refreshToken {
+		// Close all sessions
+		s.queries.Session.DeleteAllSessions(session.UserID)
+		return types.UserSession{}, types.ErrInvalidToken
+	}
+
+	// Check if the session is expired
+	if time.Now().After(session.ExpiresAt) {
+		return types.UserSession{}, types.ErrSessionExpired
+	}
+
+	// Generate new access and refresh tokens
+	refreshToken, refreshExpiration, err := s.GenerateRefreshToken(sessionID, session.UserID, config.SessionExpiration)
+	if err != nil {
+		return types.UserSession{}, err
+	}
+
+	accessToken, accessExpiration, err := s.GenerateAccessToken(config.AccessTokenExpiration)
+	if err != nil {
+		return types.UserSession{}, err
+	}
+
+	session, err = s.queries.Session.UpdateSession(sessionID, refreshToken, refreshExpiration, time.Now())
+	if err != nil {
+		return types.UserSession{}, err
+	}
+
+	return types.UserSession{
+		ID:                   session.ID,
+		UserID:               session.UserID,
+		RefreshToken:         refreshToken,
+		AccessToken:          accessToken,
+		CreatedAt:            session.CreatedAt,
+		AccessTokenExpiresAt: accessExpiration,
+		ExpiresAt:            refreshExpiration,
+	}, nil
+}
+
+func (s *AuthService) GenerateAccessToken(expirationTime time.Duration) (string, time.Time, error) {
+	expiration := time.Now().Add(expirationTime)
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"exp": expiration.Unix(),
 	})
@@ -66,9 +152,9 @@ func (s *AuthService) GenerateAccessToken(expiresMs int) (string, time.Time, err
 	return tokenString, expiration, nil
 }
 
-func (s *AuthService) GenerateRefreshToken(sessionID, userID string, expiresMs int) (string, time.Time, error) {
+func (s *AuthService) GenerateRefreshToken(sessionID, userID string, expirationTime time.Duration) (string, time.Time, error) {
 	// Implement JWT token generation logic here
-	expiration := time.Now().Add(time.Duration(expiresMs) * time.Millisecond)
+	expiration := time.Now().Add(expirationTime)
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"session_id": sessionID,
 		"user_id":    userID,

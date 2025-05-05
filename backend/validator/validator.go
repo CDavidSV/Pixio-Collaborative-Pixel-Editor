@@ -60,9 +60,13 @@ func Validate(obj any) (ValidationResult, error) {
 
 		validationRules := strings.Split(tag, ",")
 		for _, rule := range validationRules {
-			err := applyValidationRule(rule, &result, field, v.Type().Field(i).Name)
+			ok, err := applyValidationRule(rule, &result, field, v.Type().Field(i).Name)
 			if err != nil {
 				return result, err
+			}
+
+			if !ok {
+				return result, nil
 			}
 		}
 	}
@@ -70,66 +74,71 @@ func Validate(obj any) (ValidationResult, error) {
 	return result, nil
 }
 
-func applyValidationRule(rule string, result *ValidationResult, field reflect.Value, fieldName string) error {
+func applyValidationRule(rule string, result *ValidationResult, field reflect.Value, fieldName string) (bool, error) {
 	switch {
 	case strings.HasPrefix(rule, "max="):
 		max, err := strconv.Atoi(strings.Split(rule, "=")[1])
 		if err != nil {
-			return err
+			return false, err
 		}
 
 		if field.Type().Kind() != reflect.String {
-			return fmt.Errorf("fields using rules \"max\" or \"min\" must be of type string")
+			return false, fmt.Errorf("fields using rules \"max\" or \"min\" must be of type string")
 		}
 
 		if !MaxChars(field.String(), max) {
 			result.IsValid = false
 			result.Errors = append(result.Errors, newValidationError(fieldName, field.String(), fmt.Sprintf("%s must be less than %d characters long", fieldName, max)))
+			return false, nil
 		}
 	case strings.HasPrefix(rule, "min="):
 		min, err := strconv.Atoi(strings.Split(rule, "=")[1])
 		if err != nil {
-			return err
+			return false, err
 		}
 
 		if field.Type().Kind() != reflect.String {
-			return fmt.Errorf("fields using rules \"max\" or \"min\" must be of type string")
+			return false, fmt.Errorf("fields using rules \"max\" or \"min\" must be of type string")
 		}
 
 		if !MinChars(field.String(), min) {
 			result.IsValid = false
 			result.Errors = append(result.Errors, newValidationError(fieldName, field.String(), fmt.Sprintf("%s must be at least %d characters long", fieldName, min)))
+			return false, nil
 		}
 	case strings.HasPrefix(rule, "email"):
 		if field.Type().Kind() != reflect.String {
-			return fmt.Errorf("fields using rules \"email\" must be of type string")
+			return false, fmt.Errorf("fields using rules \"email\" must be of type string")
 		}
 
 		if !IsEmail(field.String()) {
 			result.IsValid = false
 			result.Errors = append(result.Errors, newValidationError(fieldName, field.String(), fmt.Sprintf("%s must be a valid email address", field.String())))
+			return false, nil
 		}
 	case strings.HasPrefix(rule, "req"):
 		if field.Type().Kind() != reflect.String {
-			return fmt.Errorf("fields using rules \"req\" must be of type string")
+			return false, fmt.Errorf("fields using rules \"req\" must be of type string")
 		}
 
 		if field.String() == "" {
 			result.IsValid = false
 			result.Errors = append(result.Errors, newValidationError(fieldName, field.String(), fmt.Sprintf("%s is required", fieldName)))
+			return false, nil
 		}
 	case strings.HasPrefix(rule, "alphanum"):
 		if field.Type().Kind() != reflect.String {
-			return fmt.Errorf("fields using rules \"alphanum\" must be of type string")
+			return false, fmt.Errorf("fields using rules \"alphanum\" must be of type string")
 		}
 
 		if !IsAlphanumeric(field.String()) {
 			result.IsValid = false
 			result.Errors = append(result.Errors, newValidationError(fieldName, field.String(), fmt.Sprintf("%s must be alphanumeric", fieldName)))
+			return false, nil
 		}
 	}
 
-	return nil
+	return true, nil
 }
 
 func newValidationError(fieldName, field, errorString string) ValidationError {

@@ -3,7 +3,7 @@ create table users (
     username varchar(32) not null,
     avatar_url text,
     email varchar(255) unique not null,
-    hashed_password char(26) not null,
+    hashed_password char(60) not null,
     created_at timestamptz default now()
 );
 

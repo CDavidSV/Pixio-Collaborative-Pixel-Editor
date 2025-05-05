@@ -33,7 +33,6 @@ func NewServer(addr string, pool *pgxpool.Pool) *Server {
 
 func (s *Server) Start() error {
 	r := chi.NewRouter()
-	r.Mount("/api/v1", s.loadRoutes())
 
 	appMiddleware := middlewares.NewMiddleware(s.queries, s.services)
 
@@ -43,6 +42,9 @@ func (s *Server) Start() error {
 	r.Use(middleware.CleanPath)
 	r.Use(cors.Handler(config.CorsConfig))
 	r.Use(appMiddleware.CommonHeaders)
+
+	// Mount routes
+	r.Mount("/api/v1", s.loadRoutes())
 
 	server := &http.Server{
 		Addr:         s.addr,

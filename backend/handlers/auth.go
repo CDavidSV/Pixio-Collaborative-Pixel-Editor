@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/CDavidSV/Pixio/types"
@@ -41,6 +42,13 @@ func (h *Handler) Signup(w http.ResponseWriter, r *http.Request) {
 	// Attempt to create the user
 	user, err := h.queries.User.CreateUser(userSignupDTO.Username, userSignupDTO.Email, hashedPassword)
 	if err != nil {
+		if errors.Is(err, types.ErrUserAlreadyExists) {
+			utils.WriteJSON(w, http.StatusConflict, types.ErrorResponse{
+				Error: "User already registered",
+			})
+			return
+		}
+
 		utils.ServerError(w, r, err, "Failed to create user")
 		return
 	}
@@ -53,10 +61,10 @@ func (h *Handler) Signup(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Set refresh token cookie
-	utils.SetCookie(w, "refresh_token", session.RefreshToken, int(session.ExpiresAt)) // 30 days
+	utils.SetCookie(w, "rt", session.RefreshToken, int(session.ExpiresAt.Sub(session.CreatedAt).Seconds())) // 30 days
 	utils.WriteJSON(w, http.StatusCreated, types.Map{
 		"token":      session.AccessToken,
-		"expires_at": session.AccessTokenExpiresAt,
+		"expires_at": session.AccessTokenExpiresAt.Unix(),
 		"user":       user,
 	})
 }
@@ -108,18 +116,87 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Set refresh token cookie
-	utils.SetCookie(w, "refresh_token", session.RefreshToken, int(session.ExpiresAt/1000)) // 30 days
+	utils.SetCookie(w, "rt", session.RefreshToken, int(session.ExpiresAt.Sub(session.CreatedAt).Seconds())) // 30 days
 	utils.WriteJSON(w, http.StatusOK, types.Map{
 		"token":      session.AccessToken,
-		"expires_at": session.AccessTokenExpiresAt,
-		"user_id":    session.UserID,
+		"expires_at": session.AccessTokenExpiresAt.Unix(),
+		"user":       user,
 	})
 }
 
 func (h *Handler) Token(w http.ResponseWriter, r *http.Request) {
+	refreshToken, err := r.Cookie("rt")
+	if err != nil {
+		if errors.Is(err, http.ErrNoCookie) {
+			utils.WriteJSON(w, http.StatusUnauthorized, types.ErrorResponse{
+				Error: "User not logged in",
+			})
+			return
+		}
 
+		utils.ServerError(w, r, err, "Failed to get cookie")
+		return
+	}
+
+	session, err := h.services.AuthService.RevalidateSession(refreshToken.Value)
+	if err != nil {
+		if errors.Is(err, types.ErrSessionExpired) {
+			utils.WriteJSON(w, http.StatusUnauthorized, types.ErrorResponse{
+				Error: "Session expired",
+			})
+			return
+		} else if errors.Is(err, types.ErrSessionNotFound) {
+			utils.WriteJSON(w, http.StatusUnauthorized, types.ErrorResponse{
+				Error: "Session not found",
+			})
+			return
+		} else if errors.Is(err, types.ErrInvalidToken) {
+			utils.WriteJSON(w, http.StatusUnauthorized, types.ErrorResponse{
+				Error: "Invalid refresh token",
+			})
+			return
+		}
+
+		utils.ServerError(w, r, err, "Failed to create session")
+		return
+	}
+
+	utils.SetCookie(w, "rt", session.RefreshToken, int(session.ExpiresAt.Sub(session.CreatedAt).Seconds()))
+	utils.WriteJSON(w, http.StatusOK, types.Map{
+		"token":      session.AccessToken,
+		"expires_at": session.AccessTokenExpiresAt.Unix(),
+	})
 }
 
 func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
+	refreshToken, err := r.Cookie("rt")
+	if err != nil {
+		if errors.Is(err, http.ErrNoCookie) {
+			utils.WriteJSON(w, http.StatusUnauthorized, types.ErrorResponse{
+				Error: "User cannot be logged out",
+			})
+			return
+		}
 
+		utils.ServerError(w, r, err, "Failed to get cookie")
+		return
+	}
+
+	err = h.services.AuthService.CloseSession(refreshToken.Value)
+	if err != nil {
+		if errors.Is(err, types.ErrInvalidToken) {
+			utils.WriteJSON(w, http.StatusUnauthorized, types.ErrorResponse{
+				Error: "User cannot be logged out",
+			})
+			return
+		}
+
+		utils.ServerError(w, r, err, "Failed to logout user")
+		return
+	}
+
+	utils.SetCookie(w, "rt", "", -1) // Delete the cookie
+	utils.WriteJSON(w, http.StatusOK, types.Map{
+		"message": "User logged out successfully",
+	})
 }
