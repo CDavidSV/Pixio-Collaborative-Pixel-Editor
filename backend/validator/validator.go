@@ -77,35 +77,53 @@ func Validate(obj any) (ValidationResult, error) {
 func applyValidationRule(rule string, result *ValidationResult, field reflect.Value, fieldName string) (bool, error) {
 	switch {
 	case strings.HasPrefix(rule, "max="):
-		max, err := strconv.Atoi(strings.Split(rule, "=")[1])
+		max, err := strconv.ParseFloat(strings.Split(rule, "=")[1], 64)
 		if err != nil {
 			return false, err
 		}
 
-		if field.Type().Kind() != reflect.String {
-			return false, fmt.Errorf("fields using rules \"max\" or \"min\" must be of type string")
+		kind := field.Type().Kind()
+		if kind == reflect.String {
+			if !MaxChars(field.String(), int(max)) {
+				result.IsValid = false
+				result.Errors = append(result.Errors, newValidationError(fieldName, field.String(), fmt.Sprintf("%s must be less than %d characters long", fieldName, int(max))))
+				return false, nil
+			}
+		} else if kind >= reflect.Int && kind <= reflect.Float64 {
+			value := field.Convert(reflect.TypeOf(float64(0))).Float()
+			if value > max {
+				result.IsValid = false
+				result.Errors = append(result.Errors, newValidationError(fieldName, fmt.Sprintf("%v", value), fmt.Sprintf("%s must be less than %v", fieldName, max)))
+				return false, nil
+			}
+		} else {
+			return false, fmt.Errorf("fields using rules \"max\" or \"min\" must be of type string or number")
 		}
 
-		if !MaxChars(field.String(), max) {
-			result.IsValid = false
-			result.Errors = append(result.Errors, newValidationError(fieldName, field.String(), fmt.Sprintf("%s must be less than %d characters long", fieldName, max)))
-			return false, nil
-		}
 	case strings.HasPrefix(rule, "min="):
-		min, err := strconv.Atoi(strings.Split(rule, "=")[1])
+		min, err := strconv.ParseFloat(strings.Split(rule, "=")[1], 64)
 		if err != nil {
 			return false, err
 		}
 
-		if field.Type().Kind() != reflect.String {
-			return false, fmt.Errorf("fields using rules \"max\" or \"min\" must be of type string")
+		kind := field.Type().Kind()
+		if kind == reflect.String {
+			if !MinChars(field.String(), int(min)) {
+				result.IsValid = false
+				result.Errors = append(result.Errors, newValidationError(fieldName, field.String(), fmt.Sprintf("%s must be at least %d characters long", fieldName, int(min))))
+				return false, nil
+			}
+		} else if kind >= reflect.Int && kind <= reflect.Float64 {
+			value := field.Convert(reflect.TypeOf(float64(0))).Float()
+			if value < min {
+				result.IsValid = false
+				result.Errors = append(result.Errors, newValidationError(fieldName, fmt.Sprintf("%v", value), fmt.Sprintf("%a must be greater than %v", fieldName, min)))
+				return false, nil
+			}
+		} else {
+			return false, fmt.Errorf("fields using rules \"max\" or \"min\" must be of type string or number")
 		}
 
-		if !MinChars(field.String(), min) {
-			result.IsValid = false
-			result.Errors = append(result.Errors, newValidationError(fieldName, field.String(), fmt.Sprintf("%s must be at least %d characters long", fieldName, min)))
-			return false, nil
-		}
 	case strings.HasPrefix(rule, "email"):
 		if field.Type().Kind() != reflect.String {
 			return false, fmt.Errorf("fields using rules \"email\" must be of type string")
