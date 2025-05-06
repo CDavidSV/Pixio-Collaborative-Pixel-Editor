@@ -117,7 +117,7 @@ func applyValidationRule(rule string, result *ValidationResult, field reflect.Va
 			value := field.Convert(reflect.TypeOf(float64(0))).Float()
 			if value < min {
 				result.IsValid = false
-				result.Errors = append(result.Errors, newValidationError(fieldName, fmt.Sprintf("%v", value), fmt.Sprintf("%a must be greater than %v", fieldName, min)))
+				result.Errors = append(result.Errors, newValidationError(fieldName, fmt.Sprintf("%v", value), fmt.Sprintf("%s must be greater than %v", fieldName, min)))
 				return false, nil
 			}
 		} else {
