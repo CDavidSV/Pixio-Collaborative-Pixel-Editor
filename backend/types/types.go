@@ -60,3 +60,28 @@ type UserLoginDTO struct {
 	Email    string `validate:"required,email"`
 	Password string `validate:"required,min=8,max=50"`
 }
+
+type Pixel struct {
+	R, G, B, A uint8
+}
+
+type Canvas struct {
+	ID           string
+	OwnerID      string
+	Title        string
+	Description  string
+	Width        uint16
+	Height       uint16
+	PixelData    []Pixel
+	LastEditedAt time.Time
+	AccessType   uint8
+	CreatedAt    time.Time
+	StarCount    uint
+}
+
+type CreateCanvasDTO struct {
+	Title      string `json:"title" validate:"required,min=1,max=32"`
+	Descrition string `json:"description" validate:"max=512"`
+	Width      uint16 `json:"width" validate:"min=100,max=1024"`
+	Height     uint16 `json:"height" validate:"min=100,max=1024"`
+}

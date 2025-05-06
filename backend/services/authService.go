@@ -19,12 +19,12 @@ type AuthService struct {
 func (s *AuthService) CreateSession(userID string) (types.UserSession, error) {
 	sessionID := utils.GenerateID()
 
-	refreshToken, refreshExpiration, err := s.GenerateRefreshToken(sessionID, userID, config.SessionExpiration)
+	refreshToken, refreshExpiration, err := s.generateRefreshToken(sessionID, userID, config.SessionExpiration)
 	if err != nil {
 		return types.UserSession{}, err
 	}
 
-	accessToken, accessExpiration, err := s.GenerateAccessToken(config.AccessTokenExpiration)
+	accessToken, accessExpiration, err := s.generateAccessToken(config.AccessTokenExpiration)
 	if err != nil {
 		return types.UserSession{}, err
 	}
@@ -113,12 +113,12 @@ func (s *AuthService) RevalidateSession(refreshToken string) (types.UserSession,
 	}
 
 	// Generate new access and refresh tokens
-	refreshToken, refreshExpiration, err := s.GenerateRefreshToken(sessionID, session.UserID, config.SessionExpiration)
+	refreshToken, refreshExpiration, err := s.generateRefreshToken(sessionID, session.UserID, config.SessionExpiration)
 	if err != nil {
 		return types.UserSession{}, err
 	}
 
-	accessToken, accessExpiration, err := s.GenerateAccessToken(config.AccessTokenExpiration)
+	accessToken, accessExpiration, err := s.generateAccessToken(config.AccessTokenExpiration)
 	if err != nil {
 		return types.UserSession{}, err
 	}
@@ -139,7 +139,7 @@ func (s *AuthService) RevalidateSession(refreshToken string) (types.UserSession,
 	}, nil
 }
 
-func (s *AuthService) GenerateAccessToken(expirationTime time.Duration) (string, time.Time, error) {
+func (s *AuthService) generateAccessToken(expirationTime time.Duration) (string, time.Time, error) {
 	expiration := time.Now().Add(expirationTime)
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"exp": expiration.Unix(),
@@ -152,7 +152,7 @@ func (s *AuthService) GenerateAccessToken(expirationTime time.Duration) (string,
 	return tokenString, expiration, nil
 }
 
-func (s *AuthService) GenerateRefreshToken(sessionID, userID string, expirationTime time.Duration) (string, time.Time, error) {
+func (s *AuthService) generateRefreshToken(sessionID, userID string, expirationTime time.Duration) (string, time.Time, error) {
 	// Implement JWT token generation logic here
 	expiration := time.Now().Add(expirationTime)
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
@@ -166,4 +166,13 @@ func (s *AuthService) GenerateRefreshToken(sessionID, userID string, expirationT
 		return "", expiration, err
 	}
 	return tokenString, expiration, nil
+}
+
+func (s *AuthService) ValidAccessToken(accessToken string) bool {
+	// Verify access token
+	token, err := jwt.Parse(accessToken, func(token *jwt.Token) (any, error) {
+		return []byte(config.AccessTokenSecret), nil
+	})
+
+	return err == nil && token.Valid
 }

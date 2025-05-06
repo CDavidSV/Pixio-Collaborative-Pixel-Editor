@@ -20,5 +20,12 @@ func (s *Server) loadRoutes(handlers *handlers.Handler, appMiddleware *middlewar
 		r.Post("/logout", handlers.LogoutPost)
 	})
 
+	r.Route("/canvas", func(r chi.Router) {
+		r.Use(middleware.AllowContentType("application/json"))
+		r.Use(appMiddleware.Authorize)
+
+		r.Post("/create", handlers.CreateCanvasPost)
+	})
+
 	return r
 }

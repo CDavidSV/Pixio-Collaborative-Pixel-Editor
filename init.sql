@@ -11,12 +11,13 @@ create table canvases (
     canvas_id char(26) primary key,
     owner_id char(26) not null,
     title varchar(32) not null,
-    description varchar(512),
+    description varchar(512) default "",
     width int not null,
     height int not null,
     data bytea not null,
     last_edited_at timestamptz default now(),
     access_type int not null,
+    created_at timestamptz default now(),
     star_count int not null,
 
     foreign key (owner_id) references users(user_id)
