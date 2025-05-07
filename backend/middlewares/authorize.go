@@ -1,8 +1,11 @@
 package middlewares
 
 import (
+	"context"
 	"net/http"
 	"strings"
+
+	"github.com/CDavidSV/Pixio/utils"
 )
 
 func (m *Middleware) Authorize(next http.Handler) http.Handler {
@@ -14,11 +17,14 @@ func (m *Middleware) Authorize(next http.Handler) http.Handler {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
-
-		if !m.services.AuthService.ValidAccessToken(s[1]) {
+		userID, ok := m.services.AuthService.ValidateAccessToken(s[1])
+		if !ok {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
+
+		ctx := context.WithValue(r.Context(), utils.UserIDKey, userID)
+		r = r.WithContext(ctx)
 
 		next.ServeHTTP(w, r)
 	})

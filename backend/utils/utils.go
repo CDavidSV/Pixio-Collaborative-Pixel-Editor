@@ -5,8 +5,14 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/CDavidSV/Pixio/types"
+	"github.com/CDavidSV/Pixio/validator"
 	"github.com/oklog/ulid/v2"
 )
+
+type contextKey string
+
+const UserIDKey contextKey = "userID"
 
 func ServerError(w http.ResponseWriter, r *http.Request, err error, msg string) {
 	var (
@@ -46,4 +52,27 @@ func SetCookie(w http.ResponseWriter, name, value string, maxAge int) {
 func GenerateID() string {
 	id := ulid.Make()
 	return id.String()
+}
+
+func DecodeJSONAndValidate[T any](w http.ResponseWriter, r *http.Request) (*T, bool) {
+	var body T
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		WriteJSON(w, http.StatusBadRequest, types.ErrorResponse{
+			Error: "Invalid json body",
+		})
+		return nil, false
+	}
+
+	result, err := validator.Validate(body)
+	if err != nil {
+		ServerError(w, r, err, "Error validating request body")
+		return nil, false
+	}
+
+	if !result.IsValid {
+		result.SendValidationError(w)
+		return nil, false
+	}
+
+	return &body, true
 }

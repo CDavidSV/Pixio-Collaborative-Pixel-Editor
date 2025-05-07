@@ -1,35 +1,31 @@
 package handlers
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/CDavidSV/Pixio/types"
 	"github.com/CDavidSV/Pixio/utils"
-	"github.com/CDavidSV/Pixio/validator"
 )
 
 func (h *Handler) CreateCanvasPost(w http.ResponseWriter, r *http.Request) {
-	var createCanvasDTO types.CreateCanvasDTO
-	if err := json.NewDecoder(r.Body).Decode(&createCanvasDTO); err != nil {
-		utils.WriteJSON(w, http.StatusBadRequest, types.ErrorResponse{
-			Error: "Invalid json body",
-		})
+	createCanvasDTO, ok := utils.DecodeJSONAndValidate[types.CreateCanvasDTO](w, r)
+	if !ok {
 		return
 	}
 
-	result, err := validator.Validate(createCanvasDTO)
+	userID := r.Context().Value(utils.UserIDKey).(string)
+	canvas, err := h.services.CanvasService.CreateCanvas(createCanvasDTO.Title, createCanvasDTO.Descrition, createCanvasDTO.Width, createCanvasDTO.Height, userID)
 	if err != nil {
-		utils.ServerError(w, r, err, "Error validating request body")
-		return
-	}
-
-	if !result.IsValid {
-		result.SendValidationError(w)
+		utils.ServerError(w, r, err, "Failed to create canvas")
 		return
 	}
 
 	utils.WriteJSON(w, http.StatusOK, types.Map{
-		"message": "Successfully created new canvas",
+		"canvas_id":  canvas.ID,
+		"created_at": canvas.CreatedAt,
 	})
+}
+
+func (h *Handler) DeleteCanvasPost(w http.ResponseWriter, r *http.Request) {
+
 }

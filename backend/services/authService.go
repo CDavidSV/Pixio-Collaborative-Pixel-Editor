@@ -24,12 +24,12 @@ func (s *AuthService) CreateSession(userID string) (types.UserSession, error) {
 		return types.UserSession{}, err
 	}
 
-	accessToken, accessExpiration, err := s.generateAccessToken(config.AccessTokenExpiration)
+	session, err := s.queries.Session.CreateSession(sessionID, userID, refreshToken, refreshExpiration)
 	if err != nil {
 		return types.UserSession{}, err
 	}
 
-	session, err := s.queries.Session.CreateSession(sessionID, userID, refreshToken, refreshExpiration)
+	accessToken, accessExpiration, err := s.generateAccessToken(config.AccessTokenExpiration, session.UserID)
 	if err != nil {
 		return types.UserSession{}, err
 	}
@@ -118,7 +118,7 @@ func (s *AuthService) RevalidateSession(refreshToken string) (types.UserSession,
 		return types.UserSession{}, err
 	}
 
-	accessToken, accessExpiration, err := s.generateAccessToken(config.AccessTokenExpiration)
+	accessToken, accessExpiration, err := s.generateAccessToken(config.AccessTokenExpiration, session.UserID)
 	if err != nil {
 		return types.UserSession{}, err
 	}
@@ -139,10 +139,11 @@ func (s *AuthService) RevalidateSession(refreshToken string) (types.UserSession,
 	}, nil
 }
 
-func (s *AuthService) generateAccessToken(expirationTime time.Duration) (string, time.Time, error) {
+func (s *AuthService) generateAccessToken(expirationTime time.Duration, userID string) (string, time.Time, error) {
 	expiration := time.Now().Add(expirationTime)
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"exp": expiration.Unix(),
+		"exp":     expiration.Unix(),
+		"user_id": userID,
 	})
 
 	tokenString, err := token.SignedString([]byte(config.AccessTokenSecret))
@@ -168,11 +169,17 @@ func (s *AuthService) generateRefreshToken(sessionID, userID string, expirationT
 	return tokenString, expiration, nil
 }
 
-func (s *AuthService) ValidAccessToken(accessToken string) bool {
+func (s *AuthService) ValidateAccessToken(accessToken string) (string, bool) {
 	// Verify access token
 	token, err := jwt.Parse(accessToken, func(token *jwt.Token) (any, error) {
 		return []byte(config.AccessTokenSecret), nil
 	})
 
-	return err == nil && token.Valid
+	claims := token.Claims.(jwt.MapClaims)
+	userID, ok := claims["session_id"].(string)
+	if !ok {
+		return userID, false
+	}
+
+	return userID, err == nil && token.Valid
 }
