@@ -12,7 +12,7 @@ type CanvasService struct {
 	queries *data.Queries
 }
 
-func (s *CanvasService) compressPixelData(pixelData []types.Pixel) []byte {
+func (s *CanvasService) compressPixelData(pixelData []types.Pixel) ([]byte, error) {
 	var rawData bytes.Buffer
 	for _, pixel := range pixelData {
 		rawData.WriteByte(pixel.R)
@@ -23,10 +23,12 @@ func (s *CanvasService) compressPixelData(pixelData []types.Pixel) []byte {
 
 	var compressed bytes.Buffer
 	zw := zlib.NewWriter(&compressed)
-	zw.Write(rawData.Bytes())
-	zw.Close()
+	defer zw.Close()
+	if _, err := zw.Write(rawData.Bytes()); err != nil {
+		return []byte{}, err
+	}
 
-	return compressed.Bytes()
+	return compressed.Bytes(), nil
 }
 
 func (s *CanvasService) loadCanvas(compressed []byte) ([]types.Pixel, error) {
@@ -46,7 +48,7 @@ func (s *CanvasService) loadCanvas(compressed []byte) ([]types.Pixel, error) {
 
 	pixelBytes := decompressed.Bytes()
 	pixelArr = make([]types.Pixel, len(pixelBytes)/4)
-	for i := range len(pixelBytes) {
+	for i := range len(pixelArr) {
 		pixelArr[i] = types.Pixel{
 			R: pixelBytes[i*4],
 			G: pixelBytes[i*4+1],
@@ -59,7 +61,16 @@ func (s *CanvasService) loadCanvas(compressed []byte) ([]types.Pixel, error) {
 }
 
 func (s *CanvasService) CreateCanvas(title, description string, width, height uint16, userID string) (types.Canvas, error) {
-	// pixelArr := make([]types.Pixel, width*height)
+	pixelArr := make([]types.Pixel, width*height)
+	pixelBytes, err := s.compressPixelData(pixelArr)
+	if err != nil {
+		return types.Canvas{}, err
+	}
 
-	return types.Canvas{}, nil
+	canvas, err := s.queries.Canvas.CreateCanvas(title, description, userID, width, height, pixelBytes)
+	if err != nil {
+		return canvas, err
+	}
+
+	return canvas, nil
 }

@@ -21,8 +21,10 @@ func (h *Handler) CreateCanvasPost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.WriteJSON(w, http.StatusOK, types.Map{
-		"canvas_id":  canvas.ID,
-		"created_at": canvas.CreatedAt,
+		"canvas_id":   canvas.ID,
+		"created_at":  canvas.CreatedAt,
+		"access_type": canvas.AccessType,
+		"pixel_data":  canvas.PixelData,
 	})
 }
 

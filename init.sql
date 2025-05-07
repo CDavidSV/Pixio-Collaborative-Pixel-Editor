@@ -18,7 +18,7 @@ create table canvases (
     last_edited_at timestamptz default now(),
     access_type int not null,
     created_at timestamptz default now(),
-    star_count int not null,
+    star_count int not null default 0,
 
     foreign key (owner_id) references users(user_id)
 );

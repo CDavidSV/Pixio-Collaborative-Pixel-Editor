@@ -8,6 +8,12 @@ import (
 // Common
 type Map map[string]any
 type NullString string
+type AccessType int
+
+const (
+	Restricted AccessType = iota
+	WithLink
+)
 
 // Errors
 var (
@@ -72,9 +78,9 @@ type Canvas struct {
 	Description  string
 	Width        uint16
 	Height       uint16
-	PixelData    []Pixel
+	PixelData    []byte
 	LastEditedAt time.Time
-	AccessType   uint8
+	AccessType   AccessType
 	CreatedAt    time.Time
 	StarCount    uint
 }
