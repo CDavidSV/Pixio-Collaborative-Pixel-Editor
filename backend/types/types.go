@@ -9,10 +9,23 @@ import (
 type Map map[string]any
 type NullString string
 type AccessType int
+type AccessRole int
+type ObjectType string
 
 const (
 	Restricted AccessType = iota
 	WithLink
+)
+
+const (
+	Owner AccessRole = iota
+	Editor
+	Viewer
+)
+
+const (
+	CanvasObject     ObjectType = "canvas"
+	CollectionObject ObjectType = "collection"
 )
 
 // Errors
@@ -72,22 +85,35 @@ type Pixel struct {
 }
 
 type Canvas struct {
-	ID           string
-	OwnerID      string
-	Title        string
-	Description  string
-	Width        uint16
-	Height       uint16
-	PixelData    []byte
-	LastEditedAt time.Time
-	AccessType   AccessType
-	CreatedAt    time.Time
-	StarCount    uint
+	ID           string     `json:"id"`
+	OwnerID      string     `json:"owner_id"`
+	Title        string     `json:"title"`
+	Description  string     `json:"description"`
+	Width        uint16     `json:"width"`
+	Height       uint16     `json:"height"`
+	PixelData    []byte     `json:"pixel_data"`
+	LastEditedAt time.Time  `json:"last_edited_at"`
+	AccessType   AccessType `json:"access_type"`
+	CreatedAt    time.Time  `json:"created_at"`
+	StarCount    uint       `json:"start_count"`
 }
 
 type CreateCanvasDTO struct {
-	Title      string `json:"title" validate:"required,min=1,max=32"`
-	Descrition string `json:"description" validate:"max=512"`
-	Width      uint16 `json:"width" validate:"min=100,max=1024"`
-	Height     uint16 `json:"height" validate:"min=100,max=1024"`
+	Title       string `json:"title" validate:"required,min=1,max=32"`
+	Description string `json:"description" validate:"max=512"`
+	Width       uint16 `json:"width" validate:"min=100,max=1024"`
+	Height      uint16 `json:"height" validate:"min=100,max=1024"`
+}
+
+type DeleteCanvasDTO struct {
+	CanvasID string `json:"canvas_id"`
+}
+
+type UserAccess struct {
+	ObjectID       string
+	ObjectType     ObjectType
+	UserID         string
+	AccessRole     AccessRole
+	LastModifiedAt time.Time
+	LastModifiedBy string
 }

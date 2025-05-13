@@ -7,14 +7,9 @@ import (
 	"github.com/CDavidSV/Pixio/types"
 	"github.com/CDavidSV/Pixio/utils"
 	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-type UserQueries struct {
-	pool *pgxpool.Pool
-}
-
-func (q *UserQueries) CreateUser(username, email, password string) (types.User, error) {
+func (q *Queries) CreateUser(username, email, password string) (types.User, error) {
 	query := `INSERT INTO users (user_id, username, email, hashed_password) VALUES ($1, $2, $3, $4) RETURNING user_id, username, email, created_at`
 
 	user_id := utils.GenerateID()
@@ -34,7 +29,7 @@ func (q *UserQueries) CreateUser(username, email, password string) (types.User, 
 	return newUser, nil
 }
 
-func (q *UserQueries) GetUserByEmail(email string) (types.User, error) {
+func (q *Queries) GetUserByEmail(email string) (types.User, error) {
 	query := `SELECT user_id, username, email, hashed_password, created_at, avatar_url FROM users WHERE email = $1`
 
 	row := q.pool.QueryRow(context.Background(), query, email)

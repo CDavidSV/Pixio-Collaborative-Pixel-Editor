@@ -9,7 +9,7 @@ import (
 	"github.com/CDavidSV/Pixio/validator"
 )
 
-func (h *Handler) SignupPost(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) PostSignup(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
 		utils.ServerError(w, r, err, "Failed to parse form")
@@ -40,7 +40,7 @@ func (h *Handler) SignupPost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Attempt to create the user
-	user, err := h.queries.User.CreateUser(userSignupDTO.Username, userSignupDTO.Email, hashedPassword)
+	user, err := h.queries.CreateUser(userSignupDTO.Username, userSignupDTO.Email, hashedPassword)
 	if err != nil {
 		if errors.Is(err, types.ErrUserAlreadyExists) {
 			utils.WriteJSON(w, http.StatusConflict, types.ErrorResponse{
@@ -69,7 +69,7 @@ func (h *Handler) SignupPost(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (h *Handler) LoginPost(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) PostLogin(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
 		utils.ServerError(w, r, err, "Failed to parse form")
@@ -92,7 +92,7 @@ func (h *Handler) LoginPost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check if the user exists
-	user, err := h.queries.User.GetUserByEmail(userLoginDTO.Email)
+	user, err := h.queries.GetUserByEmail(userLoginDTO.Email)
 	if err != nil {
 		utils.WriteJSON(w, http.StatusUnauthorized, types.ErrorResponse{
 			Error: "Invalid email or password",
@@ -124,7 +124,7 @@ func (h *Handler) LoginPost(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (h *Handler) TokenPost(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) PostToken(w http.ResponseWriter, r *http.Request) {
 	refreshToken, err := r.Cookie("rt")
 	if err != nil {
 		if errors.Is(err, http.ErrNoCookie) {
@@ -168,7 +168,7 @@ func (h *Handler) TokenPost(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (h *Handler) LogoutPost(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) PostLogout(w http.ResponseWriter, r *http.Request) {
 	refreshToken, err := r.Cookie("rt")
 	if err != nil {
 		if errors.Is(err, http.ErrNoCookie) {

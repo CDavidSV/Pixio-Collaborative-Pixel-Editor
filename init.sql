@@ -11,7 +11,7 @@ create table canvases (
     canvas_id char(26) primary key,
     owner_id char(26) not null,
     title varchar(32) not null,
-    description varchar(512) default "",
+    description varchar(512) default '',
     width int not null,
     height int not null,
     data bytea not null,
@@ -45,13 +45,13 @@ create table edits (
 
 create type object_type as enum ('canvas', 'collection');
 
-create table access_rules (
+create table user_access (
     object_id char(26) not null,
     object_type object_type,
     user_id char(26) not null,
-    permissions int not null,
+    access_role int not null,
     last_modified_at timestamptz default now(),
-    last_modified_by char(26),
+    last_modified_by char(26) not null,
 
     primary key (object_id, user_id),
     foreign key (user_id) references users(user_id),

@@ -12,7 +12,7 @@ type CanvasService struct {
 	queries *data.Queries
 }
 
-func (s *CanvasService) compressPixelData(pixelData []types.Pixel) ([]byte, error) {
+func (s *CanvasService) CompressPixelData(pixelData []types.Pixel) ([]byte, error) {
 	var rawData bytes.Buffer
 	for _, pixel := range pixelData {
 		rawData.WriteByte(pixel.R)
@@ -31,7 +31,7 @@ func (s *CanvasService) compressPixelData(pixelData []types.Pixel) ([]byte, erro
 	return compressed.Bytes(), nil
 }
 
-func (s *CanvasService) loadCanvas(compressed []byte) ([]types.Pixel, error) {
+func (s *CanvasService) LoadCanvas(compressed []byte) ([]types.Pixel, error) {
 	var pixelArr []types.Pixel
 	var decompressed bytes.Buffer
 
@@ -58,19 +58,4 @@ func (s *CanvasService) loadCanvas(compressed []byte) ([]types.Pixel, error) {
 	}
 
 	return pixelArr, nil
-}
-
-func (s *CanvasService) CreateCanvas(title, description string, width, height uint16, userID string) (types.Canvas, error) {
-	pixelArr := make([]types.Pixel, width*height)
-	pixelBytes, err := s.compressPixelData(pixelArr)
-	if err != nil {
-		return types.Canvas{}, err
-	}
-
-	canvas, err := s.queries.Canvas.CreateCanvas(title, description, userID, width, height, pixelBytes)
-	if err != nil {
-		return canvas, err
-	}
-
-	return canvas, nil
 }

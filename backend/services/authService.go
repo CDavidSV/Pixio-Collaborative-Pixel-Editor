@@ -24,7 +24,7 @@ func (s *AuthService) CreateSession(userID string) (types.UserSession, error) {
 		return types.UserSession{}, err
 	}
 
-	session, err := s.queries.Session.CreateSession(sessionID, userID, refreshToken, refreshExpiration)
+	session, err := s.queries.CreateSession(sessionID, userID, refreshToken, refreshExpiration)
 	if err != nil {
 		return types.UserSession{}, err
 	}
@@ -71,7 +71,7 @@ func (s *AuthService) CloseSession(refreshToken string) error {
 		return types.ErrInvalidToken
 	}
 
-	return s.queries.Session.DeleteSession(sessionID)
+	return s.queries.DeleteSession(sessionID)
 }
 
 func (s *AuthService) RevalidateSession(refreshToken string) (types.UserSession, error) {
@@ -90,11 +90,11 @@ func (s *AuthService) RevalidateSession(refreshToken string) (types.UserSession,
 		return types.UserSession{}, types.ErrInvalidToken
 	}
 
-	session, err := s.queries.Session.GetSession(sessionID)
+	session, err := s.queries.GetSession(sessionID)
 	if err != nil {
 		if errors.Is(err, types.ErrSessionNotFound) {
 			// Close all sessions
-			s.queries.Session.DeleteAllSessions(session.UserID)
+			s.queries.DeleteAllSessions(session.UserID)
 		}
 
 		return types.UserSession{}, err
@@ -103,7 +103,7 @@ func (s *AuthService) RevalidateSession(refreshToken string) (types.UserSession,
 	// Check if the refresh token matches the one in the database
 	if session.RefreshToken != refreshToken {
 		// Close all sessions
-		s.queries.Session.DeleteAllSessions(session.UserID)
+		s.queries.DeleteAllSessions(session.UserID)
 		return types.UserSession{}, types.ErrInvalidToken
 	}
 
@@ -123,7 +123,7 @@ func (s *AuthService) RevalidateSession(refreshToken string) (types.UserSession,
 		return types.UserSession{}, err
 	}
 
-	session, err = s.queries.Session.UpdateSession(sessionID, refreshToken, refreshExpiration, time.Now())
+	session, err = s.queries.UpdateSession(sessionID, refreshToken, refreshExpiration, time.Now())
 	if err != nil {
 		return types.UserSession{}, err
 	}
