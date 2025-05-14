@@ -113,34 +113,30 @@ type DeleteCanvasDTO struct {
 }
 
 type UserAccess struct {
-	ObjectID       string
-	ObjectType     ObjectType
-	UserID         string
-	AccessRole     AccessRole
-	LastModifiedAt time.Time
-	LastModifiedBy string
+	ObjectID       string     `json:"object_id"`
+	ObjectType     ObjectType `json:"object_type"`
+	UserID         string     `json:"user_id"`
+	AccessRole     AccessRole `json:"access_role"`
+	LastModifiedAt time.Time  `json:"last_modified_at"`
+	LastModifiedBy string     `json:"last_modified_by"`
 }
 
 type CreateAccessDTO struct {
-	CanvasID   string     `json:"canvas_id" validate:"required,min=26,max=26"`
 	UserEmail  string     `json:"user_email" validate:"required,email"`
 	AccessRole AccessRole `json:"access_role" validate:"min=1,max=2"`
 	NotifyUser bool       `json:"notify_user"`
 }
 
 type DeleteAccessDTO struct {
-	CanvasID string `json:"canvas_id" validate:"required,min=26,max=26"`
-	UserID   string `json:"user_id" validate:"required,min=26,max=26"`
+	UserID string `json:"user_id" validate:"required,min=26,max=26"`
 }
 
 type UpdateAccessDTO struct {
-	CanvasID   string     `json:"canvas_id" validate:"required,min=26,max=26"`
 	UserID     string     `json:"user_id" validate:"required,min=26,max=26"`
 	AccessRole AccessRole `json:"access_role" validate:"min=1,max=2"`
 }
 
 type UpdateGlobalAccessDTO struct {
-	CanvasID       string     `json:"canvas_id" validate:"required,min=26,max=26"`
 	LinkAccessType AccessType `json:"access_type" validate:"min=0,max=1"`
 	LinkAccessRole AccessRole `json:"access_role" validate:"min=1,max=2"`
 }

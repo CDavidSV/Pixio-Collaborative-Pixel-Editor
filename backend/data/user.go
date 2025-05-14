@@ -32,12 +32,7 @@ func (q *Queries) CreateUser(username, email, password string) (types.User, erro
 func (q *Queries) GetUserByEmail(email string) (types.User, error) {
 	query := `SELECT user_id, username, email, hashed_password, created_at, avatar_url FROM users WHERE email = $1`
 
-	row := q.pool.QueryRow(context.Background(), query, email)
-
-	user := types.User{}
-	if err := row.Scan(&user.ID, &user.Username, &user.Email, &user.HashedPassword, &user.CreatedAt, &user.AvatarURL); err != nil {
-		return user, err
-	}
-
-	return user, nil
+	var user types.User
+	err := q.pool.QueryRow(context.Background(), query, email).Scan(&user.ID, &user.Username, &user.Email, &user.HashedPassword, &user.CreatedAt, &user.AvatarURL)
+	return user, err
 }

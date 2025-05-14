@@ -44,7 +44,7 @@ func (m *Middleware) AuthorizeCanvasAccess(next http.Handler) http.Handler {
 
 		ctx := context.WithValue(r.Context(), utils.UserIDKey, userID)
 		ctx = context.WithValue(ctx, utils.CanvasKey, canvas)
-		ctx = context.WithValue(ctx, utils.AccessRule, userAccess.AccessRole)
+		ctx = context.WithValue(ctx, utils.AccessRuleKey, userAccess.AccessRole)
 
 		r = r.WithContext(ctx)
 		next.ServeHTTP(w, r)

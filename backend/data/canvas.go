@@ -101,3 +101,13 @@ func (q *Queries) DeleteCanvas(canvasID string) error {
 	_, err := q.pool.Exec(context.Background(), query, canvasID)
 	return err
 }
+
+func (q *Queries) UpdateLinkAccess(canvasID string, accessType types.AccessType, accessRole types.AccessRole) error {
+	if accessRole == types.Owner {
+		return fmt.Errorf("access role cannot be of type owner")
+	}
+
+	query := `UPDATE canvases SET link_access_type = $1, link_access_role = $2 WHERE canvas_id = $3`
+	_, err := q.pool.Exec(context.Background(), query, accessType, accessRole, canvasID)
+	return err
+}

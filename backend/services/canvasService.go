@@ -63,21 +63,26 @@ func (s *CanvasService) LoadCanvas(compressed []byte) ([]types.Pixel, error) {
 }
 
 func (s *CanvasService) UserHasAccess(canvasID, userID string) (types.UserAccess, types.Canvas, error) {
+	var userAccess types.UserAccess
 	canvas, err := s.queries.GetCanvas(canvasID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return types.UserAccess{}, canvas, types.ErrCanvasDoesNotExist
+			return userAccess, canvas, types.ErrCanvasDoesNotExist
 		}
-		return types.UserAccess{}, canvas, err
+		return userAccess, canvas, err
 	}
 
-	userAccess, err := s.queries.GetUserAccess(canvas.ID, types.CanvasObject, userID)
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) && canvas.LinkAccessType == types.Restricted {
-			return userAccess, canvas, types.ErrUserAccessDenied
-		}
+	if canvas.LinkAccessType != types.Restricted {
+		return userAccess, canvas, types.ErrUserAccessDenied
+	}
 
-		return userAccess, canvas, err
+	// Check if the user has explicit access to the canvas
+	userAccess, err = s.queries.GetUserAccess(canvas.ID, types.CanvasObject, userID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return types.UserAccess{}, canvas, types.ErrUserAccessDenied
+		}
+		return types.UserAccess{}, canvas, err
 	}
 
 	return userAccess, canvas, nil
