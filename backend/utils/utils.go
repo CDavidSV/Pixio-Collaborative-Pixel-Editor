@@ -12,7 +12,11 @@ import (
 
 type contextKey string
 
-const UserIDKey contextKey = "userID"
+const (
+	UserIDKey  contextKey = "userID"
+	CanvasKey  contextKey = "canvas"
+	AccessRule contextKey = "accessRule"
+)
 
 func ServerError(w http.ResponseWriter, r *http.Request, err error, msg string) {
 	var (

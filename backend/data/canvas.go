@@ -39,14 +39,15 @@ func (q *Queries) CreateCanvas(title, description, userID string, width, height 
 	defer br.Close()
 
 	canvas = types.Canvas{
-		ID:          canvasID,
-		OwnerID:     userID,
-		Title:       title,
-		Description: description,
-		Width:       width,
-		Height:      height,
-		PixelData:   data,
-		AccessType:  types.Restricted,
+		ID:             canvasID,
+		OwnerID:        userID,
+		Title:          title,
+		Description:    description,
+		Width:          width,
+		Height:         height,
+		PixelData:      data,
+		LinkAccessType: types.Restricted,
+		LinkAccessRole: types.Viewer,
 	}
 
 	if err := br.QueryRow().Scan(&canvas.LastEditedAt, &canvas.CreatedAt); err != nil {
@@ -85,7 +86,8 @@ func (q *Queries) GetCanvas(canvasID string) (types.Canvas, error) {
 		&canvas.Height,
 		&canvas.PixelData,
 		&canvas.LastEditedAt,
-		&canvas.AccessType,
+		&canvas.LinkAccessType,
+		&canvas.LinkAccessRole,
 		&canvas.CreatedAt,
 		&canvas.StarCount,
 	)

@@ -20,12 +20,26 @@ func (s *Server) loadRoutes(handlers *handlers.Handler, appMiddleware *middlewar
 		r.Post("/logout", handlers.PostLogout)
 	})
 
+	// Canvas routes
 	r.Route("/canvas", func(r chi.Router) {
 		r.Use(middleware.AllowContentType("application/json"))
 		r.Use(appMiddleware.Authorize)
+		r.Use(appMiddleware.AuthorizeCanvasAccess)
 
 		r.Post("/create", handlers.PostCreateCanvas)
 		r.Get("/{id}", handlers.GetCanvas)
+	})
+
+	// User access routes
+	r.Route("/access", func(r chi.Router) {
+		r.Use(middleware.AllowContentType("application/json"))
+		r.Use(appMiddleware.Authorize)
+
+		r.Post("/{id}/create", handlers.PostCreateAccess)
+		r.Post("/{id}/delete", handlers.PostDeleteAccess)
+		r.Put("/{id}/update", handlers.PutUpdateAccess)
+		r.Get("/{id}", handlers.GetAccessRules)
+		r.Put("/", handlers.PutUpdateGlobalAccess)
 	})
 
 	return r

@@ -16,7 +16,8 @@ create table canvases (
     height int not null,
     data bytea not null,
     last_edited_at timestamptz default now(),
-    access_type int not null,
+    link_access_type int not null,
+    link_access_role int not null,
     created_at timestamptz default now(),
     star_count int not null default 0,
 

@@ -7,7 +7,6 @@ import (
 	"github.com/CDavidSV/Pixio/types"
 	"github.com/CDavidSV/Pixio/utils"
 	"github.com/go-chi/chi/v5"
-	"github.com/jackc/pgx/v5"
 )
 
 func (h *Handler) PostCreateCanvas(w http.ResponseWriter, r *http.Request) {
@@ -33,7 +32,7 @@ func (h *Handler) PostCreateCanvas(w http.ResponseWriter, r *http.Request) {
 	utils.WriteJSON(w, http.StatusOK, types.Map{
 		"canvas_id":   canvas.ID,
 		"created_at":  canvas.CreatedAt,
-		"access_type": canvas.AccessType,
+		"access_type": canvas.LinkAccessType,
 		"pixel_data":  canvas.PixelData,
 	})
 }
@@ -49,17 +48,18 @@ func (h *Handler) GetCanvas(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	canvas, err := h.queries.GetCanvas(canvasID)
+	userAccess, canvas, err := h.services.CanvasService.UserHasAccess(canvasID, userID)
 	if err != nil {
-		utils.ServerError(w, r, err, "Unable to fetch canvas")
-		return
-	}
-
-	userAccess, err := h.queries.GetUserAccess(canvasID, types.CanvasObject, userID)
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) && canvas.AccessType == types.Restricted {
+		if errors.Is(err, types.ErrUserAccessDenied) {
 			utils.WriteJSON(w, http.StatusUnauthorized, types.ErrorResponse{
 				Error: "You do not have permission to access this canvas",
+			})
+			return
+		}
+
+		if errors.Is(err, types.ErrCanvasDoesNotExist) {
+			utils.WriteJSON(w, http.StatusUnauthorized, types.ErrorResponse{
+				Error: "Canvas does not exist",
 			})
 			return
 		}

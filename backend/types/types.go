@@ -35,6 +35,8 @@ var (
 	ErrInvalidToken       = errors.New("invalid token")
 	ErrSessionNotFound    = errors.New("session not found")
 	ErrSessionExpired     = errors.New("session expired")
+	ErrUserAccessDenied   = errors.New("user has no permissions to access the canvas")
+	ErrCanvasDoesNotExist = errors.New("canvas does not exist")
 )
 
 type ErrorResponse struct {
@@ -85,17 +87,18 @@ type Pixel struct {
 }
 
 type Canvas struct {
-	ID           string     `json:"id"`
-	OwnerID      string     `json:"owner_id"`
-	Title        string     `json:"title"`
-	Description  string     `json:"description"`
-	Width        uint16     `json:"width"`
-	Height       uint16     `json:"height"`
-	PixelData    []byte     `json:"pixel_data"`
-	LastEditedAt time.Time  `json:"last_edited_at"`
-	AccessType   AccessType `json:"access_type"`
-	CreatedAt    time.Time  `json:"created_at"`
-	StarCount    uint       `json:"start_count"`
+	ID             string     `json:"id"`
+	OwnerID        string     `json:"owner_id"`
+	Title          string     `json:"title"`
+	Description    string     `json:"description"`
+	Width          uint16     `json:"width"`
+	Height         uint16     `json:"height"`
+	PixelData      []byte     `json:"pixel_data"`
+	LastEditedAt   time.Time  `json:"last_edited_at"`
+	LinkAccessType AccessType `json:"access_type"`
+	LinkAccessRole AccessRole `json:"access_role"`
+	CreatedAt      time.Time  `json:"created_at"`
+	StarCount      uint       `json:"start_count"`
 }
 
 type CreateCanvasDTO struct {
@@ -116,4 +119,28 @@ type UserAccess struct {
 	AccessRole     AccessRole
 	LastModifiedAt time.Time
 	LastModifiedBy string
+}
+
+type CreateAccessDTO struct {
+	CanvasID   string     `json:"canvas_id" validate:"required,min=26,max=26"`
+	UserEmail  string     `json:"user_email" validate:"required,email"`
+	AccessRole AccessRole `json:"access_role" validate:"min=1,max=2"`
+	NotifyUser bool       `json:"notify_user"`
+}
+
+type DeleteAccessDTO struct {
+	CanvasID string `json:"canvas_id" validate:"required,min=26,max=26"`
+	UserID   string `json:"user_id" validate:"required,min=26,max=26"`
+}
+
+type UpdateAccessDTO struct {
+	CanvasID   string     `json:"canvas_id" validate:"required,min=26,max=26"`
+	UserID     string     `json:"user_id" validate:"required,min=26,max=26"`
+	AccessRole AccessRole `json:"access_role" validate:"min=1,max=2"`
+}
+
+type UpdateGlobalAccessDTO struct {
+	CanvasID       string     `json:"canvas_id" validate:"required,min=26,max=26"`
+	LinkAccessType AccessType `json:"access_type" validate:"min=0,max=1"`
+	LinkAccessRole AccessRole `json:"access_role" validate:"min=1,max=2"`
 }

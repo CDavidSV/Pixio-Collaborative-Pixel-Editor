@@ -3,9 +3,11 @@ package services
 import (
 	"bytes"
 	"compress/zlib"
+	"errors"
 
 	"github.com/CDavidSV/Pixio/data"
 	"github.com/CDavidSV/Pixio/types"
+	"github.com/jackc/pgx/v5"
 )
 
 type CanvasService struct {
@@ -58,4 +60,25 @@ func (s *CanvasService) LoadCanvas(compressed []byte) ([]types.Pixel, error) {
 	}
 
 	return pixelArr, nil
+}
+
+func (s *CanvasService) UserHasAccess(canvasID, userID string) (types.UserAccess, types.Canvas, error) {
+	canvas, err := s.queries.GetCanvas(canvasID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return types.UserAccess{}, canvas, types.ErrCanvasDoesNotExist
+		}
+		return types.UserAccess{}, canvas, err
+	}
+
+	userAccess, err := s.queries.GetUserAccess(canvas.ID, types.CanvasObject, userID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) && canvas.LinkAccessType == types.Restricted {
+			return userAccess, canvas, types.ErrUserAccessDenied
+		}
+
+		return userAccess, canvas, err
+	}
+
+	return userAccess, canvas, nil
 }

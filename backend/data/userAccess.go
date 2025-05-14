@@ -21,3 +21,17 @@ func (q *Queries) GetUserAccess(objectID string, objectType types.ObjectType, us
 
 	return userAccess, err
 }
+
+func (q *Queries) CreateUserAccess(objectID string, objectType types.ObjectType, accessRole types.AccessRole, userID, creatorUserID string) (types.UserAccess, error) {
+	query := `INSERT INTO user_access (object_id, object_type, user_id, access_role, last_modified_by) VALUES ($1, $2, $3, $4, $5) RETURNING last_modified_at`
+
+	userAccess := types.UserAccess{
+		ObjectID:       objectID,
+		ObjectType:     objectType,
+		UserID:         userID,
+		AccessRole:     accessRole,
+		LastModifiedBy: creatorUserID,
+	}
+	err := q.pool.QueryRow(context.Background(), query, objectID, objectType, userID, accessRole, creatorUserID).Scan(&userAccess.LastModifiedAt)
+	return userAccess, err
+}
