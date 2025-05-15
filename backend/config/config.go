@@ -3,6 +3,7 @@ package config
 import (
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/go-chi/cors"
@@ -18,6 +19,7 @@ func init() {
 	DSN = os.Getenv("DATABASE_URL")
 	AccessTokenSecret = os.Getenv("ACCESS_TOKEN_SECRET")
 	RefreshTokenSecret = os.Getenv("REFRESH_TOKEN_SECRET")
+	AllowedDomains = strings.Split(os.Getenv("ALLOWED_DOMAINS"), ",")
 }
 
 var (
@@ -31,6 +33,7 @@ var (
 	DSN                string
 	AccessTokenSecret  string
 	RefreshTokenSecret string
+	AllowedDomains     []string
 	CorsConfig         = cors.Options{
 		AllowedOrigins:   []string{"*"},
 		AllowedMethods:   []string{"GET", "POST", "DELETE", "HEAD", "OPTION", "PUT"},

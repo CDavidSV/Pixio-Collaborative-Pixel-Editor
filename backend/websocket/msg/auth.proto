@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package msg;
+
+option go_package = "./websocket;msg";
+
+message Auth {
+    string user_id = 1;
+    string token = 2;
+}
