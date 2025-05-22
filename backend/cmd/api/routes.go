@@ -27,6 +27,8 @@ func (s *Server) loadRoutes(handlers *handlers.Handler, appMiddleware *middlewar
 		r.Use(appMiddleware.AuthorizeCanvasAccess)
 
 		r.Post("/create", handlers.PostCreateCanvas)
+		r.Post("/{id}/join", handlers.PostJoinCanvasRoom)
+		r.Post("/{id}/leave", handlers.PostLeaveCanvasRoom)
 		r.Get("/{id}", handlers.GetCanvas)
 	})
 

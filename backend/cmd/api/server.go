@@ -9,6 +9,7 @@ import (
 	"github.com/CDavidSV/Pixio/handlers"
 	"github.com/CDavidSV/Pixio/middlewares"
 	"github.com/CDavidSV/Pixio/services"
+	"github.com/CDavidSV/Pixio/websocket"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
@@ -35,8 +36,12 @@ func NewServer(addr string, pool *pgxpool.Pool) *Server {
 func (s *Server) Start() error {
 	r := chi.NewRouter()
 
+	// Create the websocket hub
+	// This hub will be used to manage websocket connections and handle messages
+	wsHub := websocket.NewWebsocketHub(s.queries, s.services)
+
 	appMiddleware := middlewares.NewMiddleware(s.queries, s.services)
-	handlers := handlers.NewHandler(s.queries, s.services)
+	handlers := handlers.NewHandler(s.queries, s.services, wsHub)
 
 	// Middleware
 	r.Use(middleware.Recoverer)

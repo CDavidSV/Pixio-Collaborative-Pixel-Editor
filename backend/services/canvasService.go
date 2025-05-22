@@ -3,11 +3,9 @@ package services
 import (
 	"bytes"
 	"compress/zlib"
-	"errors"
 
 	"github.com/CDavidSV/Pixio/data"
 	"github.com/CDavidSV/Pixio/types"
-	"github.com/jackc/pgx/v5"
 )
 
 type CanvasService struct {
@@ -60,30 +58,4 @@ func (s *CanvasService) LoadCanvas(compressed []byte) ([]types.Pixel, error) {
 	}
 
 	return pixelArr, nil
-}
-
-func (s *CanvasService) UserHasAccess(canvasID, userID string) (types.UserAccess, types.Canvas, error) {
-	var userAccess types.UserAccess
-	canvas, err := s.queries.GetCanvas(canvasID)
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return userAccess, canvas, types.ErrCanvasDoesNotExist
-		}
-		return userAccess, canvas, err
-	}
-
-	if canvas.LinkAccessType != types.Restricted {
-		return userAccess, canvas, types.ErrUserAccessDenied
-	}
-
-	// Check if the user has explicit access to the canvas
-	userAccess, err = s.queries.GetUserAccess(canvas.ID, types.CanvasObject, userID)
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return types.UserAccess{}, canvas, types.ErrUserAccessDenied
-		}
-		return types.UserAccess{}, canvas, err
-	}
-
-	return userAccess, canvas, nil
 }

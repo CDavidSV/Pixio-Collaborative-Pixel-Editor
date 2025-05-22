@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/CDavidSV/Pixio/types"
@@ -39,7 +38,6 @@ func (h *Handler) PostCreateCanvas(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) GetCanvas(w http.ResponseWriter, r *http.Request) {
 	canvasID := chi.URLParam(r, "id")
-	userID := r.Context().Value(utils.UserIDKey).(string)
 
 	if canvasID == "" {
 		utils.WriteJSON(w, http.StatusUnauthorized, types.ErrorResponse{
@@ -48,23 +46,12 @@ func (h *Handler) GetCanvas(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userAccess, canvas, err := h.services.CanvasService.UserHasAccess(canvasID, userID)
+	// Get access rule for the user from context
+	userAccess := r.Context().Value(utils.AccessRuleKey).(types.UserAccess)
+
+	canvas, err := h.queries.GetCanvas(canvasID)
 	if err != nil {
-		if errors.Is(err, types.ErrUserAccessDenied) {
-			utils.WriteJSON(w, http.StatusUnauthorized, types.ErrorResponse{
-				Error: "You do not have permission to access this canvas",
-			})
-			return
-		}
-
-		if errors.Is(err, types.ErrCanvasDoesNotExist) {
-			utils.WriteJSON(w, http.StatusUnauthorized, types.ErrorResponse{
-				Error: "Canvas does not exist",
-			})
-			return
-		}
-
-		utils.ServerError(w, r, err, "Unable to fetch user access")
+		utils.ServerError(w, r, err, "Failed to fetch canvas")
 		return
 	}
 
@@ -101,5 +88,53 @@ func (h *Handler) PostDeleteCanvas(w http.ResponseWriter, r *http.Request) {
 
 	utils.WriteJSON(w, http.StatusOK, types.Map{
 		"message": "Canvas deleted successfully",
+	})
+}
+
+func (h *Handler) PostJoinCanvasRoom(w http.ResponseWriter, r *http.Request) {
+	canvasID := chi.URLParam(r, "id")
+	userID := r.Context().Value(utils.UserIDKey).(string)
+
+	if canvasID == "" {
+		utils.WriteJSON(w, http.StatusUnauthorized, types.ErrorResponse{
+			Error: "Canvas id must be provided",
+		})
+		return
+	}
+
+	// Get access rule for the user from context
+	userAccess := r.Context().Value(utils.AccessRuleKey).(types.UserAccess)
+
+	canvas, err := h.queries.GetCanvas(canvasID)
+	if err != nil {
+		utils.ServerError(w, r, err, "Failed to fetch canvas")
+		return
+	}
+
+	if err := h.websocket.JoinRoom(canvas.ID, userID, userAccess); err != nil {
+		utils.ServerError(w, r, err, "Failed to join canvas room")
+		return
+	}
+
+	utils.WriteJSON(w, http.StatusOK, types.Map{
+		"canvas": canvas,
+		"access": userAccess,
+	})
+}
+
+func (h *Handler) PostLeaveCanvasRoom(w http.ResponseWriter, r *http.Request) {
+	canvasID := chi.URLParam(r, "id")
+	userID := r.Context().Value(utils.UserIDKey).(string)
+
+	if canvasID == "" {
+		utils.WriteJSON(w, http.StatusUnauthorized, types.ErrorResponse{
+			Error: "Canvas id must be provided",
+		})
+		return
+	}
+
+	h.websocket.LeaveRoom(canvasID, userID)
+	utils.WriteJSON(w, http.StatusOK, types.Map{
+		"message": "Left canvas room successfully",
 	})
 }

@@ -4,7 +4,16 @@ package msg;
 
 option go_package = "./websocket;msg";
 
+message WSMessage {
+    string type = 1;
+    bytes payload = 2;
+}
+
 message Auth {
     string user_id = 1;
     string token = 2;
+}
+
+message WSError {
+    string error = 1;
 }

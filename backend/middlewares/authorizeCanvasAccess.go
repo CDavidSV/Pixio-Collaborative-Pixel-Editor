@@ -8,6 +8,7 @@ import (
 	"github.com/CDavidSV/Pixio/types"
 	"github.com/CDavidSV/Pixio/utils"
 	"github.com/go-chi/chi/v5"
+	"github.com/jackc/pgx/v5"
 )
 
 func (m *Middleware) AuthorizeCanvasAccess(next http.Handler) http.Handler {
@@ -22,18 +23,11 @@ func (m *Middleware) AuthorizeCanvasAccess(next http.Handler) http.Handler {
 			return
 		}
 
-		userAccess, canvas, err := m.services.CanvasService.UserHasAccess(canvasID, userID)
+		userAccess, err := m.queries.GetUserAccess(canvasID, types.CanvasObject, userID)
 		if err != nil {
-			if errors.Is(err, types.ErrUserAccessDenied) {
+			if errors.Is(err, pgx.ErrNoRows) {
 				utils.WriteJSON(w, http.StatusUnauthorized, types.ErrorResponse{
 					Error: "You do not have permission to access this canvas",
-				})
-				return
-			}
-
-			if errors.Is(err, types.ErrCanvasDoesNotExist) {
-				utils.WriteJSON(w, http.StatusNotFound, types.ErrorResponse{
-					Error: "Canvas does not exist",
 				})
 				return
 			}
@@ -43,7 +37,6 @@ func (m *Middleware) AuthorizeCanvasAccess(next http.Handler) http.Handler {
 		}
 
 		ctx := context.WithValue(r.Context(), utils.UserIDKey, userID)
-		ctx = context.WithValue(ctx, utils.CanvasKey, canvas)
 		ctx = context.WithValue(ctx, utils.AccessRuleKey, userAccess.AccessRole)
 
 		r = r.WithContext(ctx)

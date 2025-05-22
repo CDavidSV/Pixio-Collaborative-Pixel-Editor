@@ -101,6 +101,21 @@ type Canvas struct {
 	StarCount      uint       `json:"start_count"`
 }
 
+type LoadedCanvas struct {
+	ID             string     `json:"id"`
+	OwnerID        string     `json:"owner_id"`
+	Title          string     `json:"title"`
+	Description    string     `json:"description"`
+	Width          uint16     `json:"width"`
+	Height         uint16     `json:"height"`
+	PixelData      []Pixel    `json:"pixel_data"`
+	LastEditedAt   time.Time  `json:"last_edited_at"`
+	LinkAccessType AccessType `json:"access_type"`
+	LinkAccessRole AccessRole `json:"access_role"`
+	CreatedAt      time.Time  `json:"created_at"`
+	StarCount      uint       `json:"start_count"`
+}
+
 type CreateCanvasDTO struct {
 	Title       string `json:"title" validate:"required,min=1,max=32"`
 	Description string `json:"description" validate:"max=512"`

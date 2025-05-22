@@ -176,7 +176,7 @@ func (s *AuthService) ValidateAccessToken(accessToken string) (string, bool) {
 	})
 
 	claims := token.Claims.(jwt.MapClaims)
-	userID, ok := claims["session_id"].(string)
+	userID, ok := claims["user_id"].(string)
 	if !ok {
 		return userID, false
 	}

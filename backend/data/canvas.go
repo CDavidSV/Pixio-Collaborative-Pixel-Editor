@@ -111,3 +111,12 @@ func (q *Queries) UpdateLinkAccess(canvasID string, accessType types.AccessType,
 	_, err := q.pool.Exec(context.Background(), query, accessType, accessRole, canvasID)
 	return err
 }
+
+func (q *Queries) GetCanvasLinkAccess(canvasID string) (types.AccessType, types.AccessRole, error) {
+	query := `SELECT link_access_type, link_access_role FROM canvases WHERE canvas_id = $1`
+
+	var accessType types.AccessType
+	var accessRole types.AccessRole
+	err := q.pool.QueryRow(context.Background(), query, canvasID).Scan(&accessType, &accessRole)
+	return accessType, accessRole, err
+}
