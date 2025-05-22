@@ -138,3 +138,10 @@ func (h *Handler) PostLeaveCanvasRoom(w http.ResponseWriter, r *http.Request) {
 		"message": "Left canvas room successfully",
 	})
 }
+
+func (h *Handler) PostUpdateCanvas(w http.ResponseWriter, r *http.Request) {
+	// updateCanvasDTO, ok := utils.DecodeJSONAndValidate[types.UpdateCanvasDTO](w, r)
+	// if !ok {
+	// 	return
+	// }
+}

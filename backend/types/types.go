@@ -155,3 +155,13 @@ type UpdateGlobalAccessDTO struct {
 	LinkAccessType AccessType `json:"access_type" validate:"min=0,max=1"`
 	LinkAccessRole AccessRole `json:"access_role" validate:"min=1,max=2"`
 }
+
+type UpdateCanvasDTO struct {
+	Title       string `json:"title" validate:"required,min=1,max=32"`
+	Description string `json:"description" validate:"max=512"`
+}
+
+type UpdateCanvasSizeDTO struct {
+	Width  uint16 `json:"width" validate:"min=100,max=1024"`
+	Height uint16 `json:"height" validate:"min=100,max=1024"`
+}
