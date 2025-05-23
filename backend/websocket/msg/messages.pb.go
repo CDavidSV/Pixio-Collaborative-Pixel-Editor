@@ -75,7 +75,6 @@ func (x *WSMessage) GetPayload() []byte {
 
 type Auth struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	Token         string                 `protobuf:"bytes,2,opt,name=token,proto3" json:"token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -109,13 +108,6 @@ func (x *Auth) ProtoReflect() protoreflect.Message {
 // Deprecated: Use Auth.ProtoReflect.Descriptor instead.
 func (*Auth) Descriptor() ([]byte, []int) {
 	return file_websocket_msg_messages_proto_rawDescGZIP(), []int{1}
-}
-
-func (x *Auth) GetUserId() string {
-	if x != nil {
-		return x.UserId
-	}
-	return ""
 }
 
 func (x *Auth) GetToken() string {
@@ -169,6 +161,126 @@ func (x *WSError) GetError() string {
 	return ""
 }
 
+type MousePosition struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	X             uint32                 `protobuf:"varint,1,opt,name=x,proto3" json:"x,omitempty"`
+	Y             uint32                 `protobuf:"varint,2,opt,name=y,proto3" json:"y,omitempty"`
+	RoomId        string                 `protobuf:"bytes,3,opt,name=room_id,json=roomId,proto3" json:"room_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MousePosition) Reset() {
+	*x = MousePosition{}
+	mi := &file_websocket_msg_messages_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MousePosition) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MousePosition) ProtoMessage() {}
+
+func (x *MousePosition) ProtoReflect() protoreflect.Message {
+	mi := &file_websocket_msg_messages_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MousePosition.ProtoReflect.Descriptor instead.
+func (*MousePosition) Descriptor() ([]byte, []int) {
+	return file_websocket_msg_messages_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *MousePosition) GetX() uint32 {
+	if x != nil {
+		return x.X
+	}
+	return 0
+}
+
+func (x *MousePosition) GetY() uint32 {
+	if x != nil {
+		return x.Y
+	}
+	return 0
+}
+
+func (x *MousePosition) GetRoomId() string {
+	if x != nil {
+		return x.RoomId
+	}
+	return ""
+}
+
+type MousePositionUpdate struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	X             uint32                 `protobuf:"varint,2,opt,name=x,proto3" json:"x,omitempty"`
+	Y             uint32                 `protobuf:"varint,3,opt,name=y,proto3" json:"y,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MousePositionUpdate) Reset() {
+	*x = MousePositionUpdate{}
+	mi := &file_websocket_msg_messages_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MousePositionUpdate) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MousePositionUpdate) ProtoMessage() {}
+
+func (x *MousePositionUpdate) ProtoReflect() protoreflect.Message {
+	mi := &file_websocket_msg_messages_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MousePositionUpdate.ProtoReflect.Descriptor instead.
+func (*MousePositionUpdate) Descriptor() ([]byte, []int) {
+	return file_websocket_msg_messages_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *MousePositionUpdate) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *MousePositionUpdate) GetX() uint32 {
+	if x != nil {
+		return x.X
+	}
+	return 0
+}
+
+func (x *MousePositionUpdate) GetY() uint32 {
+	if x != nil {
+		return x.Y
+	}
+	return 0
+}
+
 var File_websocket_msg_messages_proto protoreflect.FileDescriptor
 
 const file_websocket_msg_messages_proto_rawDesc = "" +
@@ -176,12 +288,19 @@ const file_websocket_msg_messages_proto_rawDesc = "" +
 	"\x1cwebsocket/msg/messages.proto\x12\x03msg\"9\n" +
 	"\tWSMessage\x12\x12\n" +
 	"\x04type\x18\x01 \x01(\tR\x04type\x12\x18\n" +
-	"\apayload\x18\x02 \x01(\fR\apayload\"5\n" +
-	"\x04Auth\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x14\n" +
+	"\apayload\x18\x02 \x01(\fR\apayload\"\x1c\n" +
+	"\x04Auth\x12\x14\n" +
 	"\x05token\x18\x02 \x01(\tR\x05token\"\x1f\n" +
 	"\aWSError\x12\x14\n" +
-	"\x05error\x18\x01 \x01(\tR\x05errorB\x11Z\x0f./websocket;msgb\x06proto3"
+	"\x05error\x18\x01 \x01(\tR\x05error\"D\n" +
+	"\rMousePosition\x12\f\n" +
+	"\x01x\x18\x01 \x01(\rR\x01x\x12\f\n" +
+	"\x01y\x18\x02 \x01(\rR\x01y\x12\x17\n" +
+	"\aroom_id\x18\x03 \x01(\tR\x06roomId\"J\n" +
+	"\x13MousePositionUpdate\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\f\n" +
+	"\x01x\x18\x02 \x01(\rR\x01x\x12\f\n" +
+	"\x01y\x18\x03 \x01(\rR\x01yB\x11Z\x0f./websocket;msgb\x06proto3"
 
 var (
 	file_websocket_msg_messages_proto_rawDescOnce sync.Once
@@ -195,11 +314,13 @@ func file_websocket_msg_messages_proto_rawDescGZIP() []byte {
 	return file_websocket_msg_messages_proto_rawDescData
 }
 
-var file_websocket_msg_messages_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_websocket_msg_messages_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_websocket_msg_messages_proto_goTypes = []any{
-	(*WSMessage)(nil), // 0: msg.WSMessage
-	(*Auth)(nil),      // 1: msg.Auth
-	(*WSError)(nil),   // 2: msg.WSError
+	(*WSMessage)(nil),           // 0: msg.WSMessage
+	(*Auth)(nil),                // 1: msg.Auth
+	(*WSError)(nil),             // 2: msg.WSError
+	(*MousePosition)(nil),       // 3: msg.MousePosition
+	(*MousePositionUpdate)(nil), // 4: msg.MousePositionUpdate
 }
 var file_websocket_msg_messages_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type
@@ -220,7 +341,7 @@ func file_websocket_msg_messages_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_websocket_msg_messages_proto_rawDesc), len(file_websocket_msg_messages_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   3,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

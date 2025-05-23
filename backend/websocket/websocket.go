@@ -13,6 +13,7 @@ import (
 	"github.com/CDavidSV/Pixio/data"
 	"github.com/CDavidSV/Pixio/services"
 	"github.com/CDavidSV/Pixio/websocket/msg"
+	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/websocket"
 	"google.golang.org/protobuf/proto"
 )
@@ -34,12 +35,6 @@ type Hub struct {
 	roomMutex sync.RWMutex
 }
 
-type WSClient struct {
-	ID   string
-	send chan []byte
-	conn *websocket.Conn
-}
-
 func NewWebsocketHub(queries *data.Queries, services *services.Services) *Hub {
 	hub := &Hub{
 		conns:    make(map[string]*WSClient),
@@ -54,9 +49,13 @@ func NewWebsocketHub(queries *data.Queries, services *services.Services) *Hub {
 }
 
 func (h *Hub) registerHandlers() {
+	h.handlers[string(msg.MousePosUpdateMsg)] = h.UpdateCursorPosition
 }
 
 func (h *Hub) WSHanlder(w http.ResponseWriter, r *http.Request) {
+	// get the user id from the request params
+	userID := chi.URLParam(r, "id")
+
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		slog.Error("Error upgrading connection: ", "error", err.Error())
@@ -68,12 +67,9 @@ func (h *Hub) WSHanlder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	client := &WSClient{
-		send: make(chan []byte),
-		conn: conn,
-	}
+	client := NewClient(userID, conn)
 
-	userID, err := h.waitForAuth(conn)
+	err = h.waitForAuth(conn, userID)
 	if err != nil {
 		slog.Error("Error authenticating user", "Error", err.Error())
 
@@ -126,32 +122,48 @@ func (h *Hub) readPump(c *WSClient) {
 		if err != nil {
 			sendError(c, "ERROR_DECODING_MESSAGE")
 		}
+
+		h.executeHandler(c, message)
 	}
 }
 
-func (h *Hub) waitForAuth(conn *websocket.Conn) (string, error) {
+func (h *Hub) executeHandler(client *WSClient, msg *msg.WSMessage) {
+	handler, ok := h.handlers[msg.Type]
+	if !ok {
+		sendError(client, ErrUnsupportedMsgType.Error())
+		return
+	}
+
+	handler(client, msg.Payload)
+}
+
+func (h *Hub) waitForAuth(conn *websocket.Conn, providedUserID string) error {
 	msgType, msgData, err := conn.ReadMessage()
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	if msgType != websocket.BinaryMessage {
-		return "", ErrInvalidMsgType
+		return ErrInvalidMsgType
 	}
 
 	authMsg := &msg.Auth{}
 	err = decodeMessage("auth", msgData, authMsg)
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	// validate access token
 	userID, ok := h.services.AuthService.ValidateAccessToken(authMsg.Token)
 	if !ok {
-		return userID, ErrFailedAuth
+		return ErrFailedAuth
 	}
 
-	return userID, nil
+	if userID != providedUserID {
+		return ErrFailedAuth
+	}
+
+	return nil
 }
 
 func (h *Hub) addConnection(client *WSClient) {

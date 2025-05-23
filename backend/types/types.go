@@ -123,10 +123,6 @@ type CreateCanvasDTO struct {
 	Height      uint16 `json:"height" validate:"min=100,max=1024"`
 }
 
-type DeleteCanvasDTO struct {
-	CanvasID string `json:"canvas_id"`
-}
-
 type UserAccess struct {
 	ObjectID       string     `json:"object_id"`
 	ObjectType     ObjectType `json:"object_type"`
@@ -157,7 +153,7 @@ type UpdateGlobalAccessDTO struct {
 }
 
 type UpdateCanvasDTO struct {
-	Title       string `json:"title" validate:"required,min=1,max=32"`
+	Title       string `json:"title" validate:"max=32"`
 	Description string `json:"description" validate:"max=512"`
 }
 

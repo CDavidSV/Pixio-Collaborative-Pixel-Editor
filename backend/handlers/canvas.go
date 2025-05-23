@@ -61,14 +61,11 @@ func (h *Handler) GetCanvas(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (h *Handler) PostDeleteCanvas(w http.ResponseWriter, r *http.Request) {
-	deleteCanvasDTO, ok := utils.DecodeJSONAndValidate[types.DeleteCanvasDTO](w, r)
-	if !ok {
-		return
-	}
-
+func (h *Handler) DeleteCanvas(w http.ResponseWriter, r *http.Request) {
+	canvasID := chi.URLParam(r, "id")
 	userID := r.Context().Value(utils.UserIDKey).(string)
-	canvasOwnerID, err := h.queries.GetCanvasOwner(deleteCanvasDTO.CanvasID)
+
+	canvasOwnerID, err := h.queries.GetCanvasOwner(canvasID)
 	if err != nil {
 		utils.ServerError(w, r, err, "Failed to fetch canvas")
 		return
@@ -81,7 +78,7 @@ func (h *Handler) PostDeleteCanvas(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.queries.DeleteCanvas(deleteCanvasDTO.CanvasID); err != nil {
+	if err := h.queries.DeleteCanvas(canvasID); err != nil {
 		utils.ServerError(w, r, err, "Failed to delete canvas")
 		return
 	}
@@ -94,13 +91,6 @@ func (h *Handler) PostDeleteCanvas(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) PostJoinCanvasRoom(w http.ResponseWriter, r *http.Request) {
 	canvasID := chi.URLParam(r, "id")
 	userID := r.Context().Value(utils.UserIDKey).(string)
-
-	if canvasID == "" {
-		utils.WriteJSON(w, http.StatusUnauthorized, types.ErrorResponse{
-			Error: "Canvas id must be provided",
-		})
-		return
-	}
 
 	// Get access rule for the user from context
 	userAccess := r.Context().Value(utils.AccessRuleKey).(types.UserAccess)
@@ -126,22 +116,27 @@ func (h *Handler) PostLeaveCanvasRoom(w http.ResponseWriter, r *http.Request) {
 	canvasID := chi.URLParam(r, "id")
 	userID := r.Context().Value(utils.UserIDKey).(string)
 
-	if canvasID == "" {
-		utils.WriteJSON(w, http.StatusUnauthorized, types.ErrorResponse{
-			Error: "Canvas id must be provided",
-		})
-		return
-	}
-
 	h.websocket.LeaveRoom(canvasID, userID)
 	utils.WriteJSON(w, http.StatusOK, types.Map{
 		"message": "Left canvas room successfully",
 	})
 }
 
-func (h *Handler) PostUpdateCanvas(w http.ResponseWriter, r *http.Request) {
-	// updateCanvasDTO, ok := utils.DecodeJSONAndValidate[types.UpdateCanvasDTO](w, r)
-	// if !ok {
-	// 	return
-	// }
+func (h *Handler) PutUpdateCanvas(w http.ResponseWriter, r *http.Request) {
+	canvasID := chi.URLParam(r, "id")
+
+	updateCanvasDTO, ok := utils.DecodeJSONAndValidate[types.UpdateCanvasDTO](w, r)
+	if !ok {
+		return
+	}
+
+	err := h.queries.UpdateCanvas(canvasID, updateCanvasDTO.Title, updateCanvasDTO.Description)
+	if err != nil {
+		utils.ServerError(w, r, err, "Failed to update canvas")
+		return
+	}
+
+	utils.WriteJSON(w, http.StatusOK, types.Map{
+		"message": "Canvas updated successfully",
+	})
 }

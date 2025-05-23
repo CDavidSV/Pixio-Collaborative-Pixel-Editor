@@ -23,6 +23,27 @@ func (m *Middleware) AuthorizeCanvasAccess(next http.Handler) http.Handler {
 			return
 		}
 
+		canvasAccessType, canvasAccessRole, err := m.queries.GetCanvasLinkAccess(canvasID)
+		if err != nil {
+			if errors.Is(err, pgx.ErrNoRows) {
+				utils.WriteJSON(w, http.StatusNotFound, types.ErrorResponse{
+					Error: "This canvas does not exist",
+				})
+				return
+			}
+
+			utils.ServerError(w, r, err, "Unable to fetch canvas access")
+			return
+		}
+
+		ctx := context.WithValue(r.Context(), utils.UserIDKey, userID)
+		if canvasAccessType == types.WithLink {
+			ctx = context.WithValue(ctx, utils.AccessRuleKey, canvasAccessRole)
+			r = r.WithContext(ctx)
+
+			next.ServeHTTP(w, r)
+		}
+
 		userAccess, err := m.queries.GetUserAccess(canvasID, types.CanvasObject, userID)
 		if err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
@@ -36,10 +57,9 @@ func (m *Middleware) AuthorizeCanvasAccess(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), utils.UserIDKey, userID)
 		ctx = context.WithValue(ctx, utils.AccessRuleKey, userAccess.AccessRole)
-
 		r = r.WithContext(ctx)
+
 		next.ServeHTTP(w, r)
 	})
 }

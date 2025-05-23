@@ -21,14 +21,14 @@ func decodeMessage(t string, b []byte, m proto.Message) error {
 	return proto.Unmarshal(message.Payload, m)
 }
 
-func encodeMessage(t string, m proto.Message) ([]byte, error) {
+func encodeMessage(t msg.WSMessageType, m proto.Message) ([]byte, error) {
 	payloadBytes, err := proto.Marshal(m)
 	if err != nil {
 		return []byte{}, err
 	}
 
 	message := &msg.WSMessage{
-		Type:    t,
+		Type:    string(t),
 		Payload: payloadBytes,
 	}
 	b, err := proto.Marshal(message)
@@ -40,7 +40,7 @@ func sendError(client *WSClient, errMsg string) {
 		Error: errMsg,
 	}
 
-	msgBytes, err := encodeMessage("error", wsError)
+	msgBytes, err := encodeMessage(msg.ErrorMsg, wsError)
 	if err != nil {
 		slog.Error("Failed to encode error message", "Error", err.Error())
 		return
@@ -49,7 +49,7 @@ func sendError(client *WSClient, errMsg string) {
 	client.send <- msgBytes
 }
 
-func sendMessage(client *WSClient, msgType string, msg proto.Message) {
+func sendMessage(client *WSClient, msgType msg.WSMessageType, msg proto.Message) {
 	msgBytes, err := encodeMessage(msgType, msg)
 	if err != nil {
 		slog.Error("Failed to encode message", "Error", err.Error())

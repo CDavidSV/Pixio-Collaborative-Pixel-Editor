@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/CDavidSV/Pixio/types"
+	"github.com/CDavidSV/Pixio/websocket/msg"
+	"google.golang.org/protobuf/proto"
 )
 
 type Room struct {
@@ -126,4 +128,43 @@ func (h *Hub) LeaveRoom(roomID, clientID string) {
 	}
 
 	room.RemoveClient(clientID)
+}
+
+func (h *Hub) UpdateCursorPosition(client *WSClient, payload []byte) {
+	mousePos := &msg.MousePosition{}
+	err := proto.Unmarshal(payload, mousePos)
+	if err != nil {
+		sendError(client, ErrUnmarshallingMsg.Error())
+		return
+	}
+
+	room := client.GetRoom(mousePos.RoomId)
+	if room == nil {
+		sendError(client, ErrRoomNotFound.Error())
+		return
+	}
+
+	room.mu.RLock()
+	defer room.mu.RUnlock()
+
+	mousePosSend := &msg.MousePositionUpdate{
+		UserId: client.ID,
+		X:      mousePos.X,
+		Y:      mousePos.Y,
+	}
+
+	message, err := encodeMessage(msg.MousePosUpdateMsg, mousePosSend)
+	if err != nil {
+		sendError(client, ErrMarshallingMsg.Error())
+		return
+	}
+
+	for _, c := range room.Clients {
+		// Don't send the message to the sender
+		if c.WSClient.ID == client.ID {
+			continue
+		}
+
+		c.WSClient.send <- message
+	}
 }

@@ -10,10 +10,21 @@ message WSMessage {
 }
 
 message Auth {
-    string user_id = 1;
     string token = 2;
 }
 
 message WSError {
     string error = 1;
+}
+
+message MousePosition {
+    uint32 x = 1;
+    uint32 y = 2;
+    string room_id = 3;
+}
+
+message MousePositionUpdate {
+    string user_id = 1;
+    uint32 x = 2;
+    uint32 y = 3;
 }

@@ -15,7 +15,6 @@ type ClientErrorCode int
 
 const (
 	UserIDKey     contextKey = "userID"
-	CanvasKey     contextKey = "canvas"
 	AccessRuleKey contextKey = "accessRule"
 )
 

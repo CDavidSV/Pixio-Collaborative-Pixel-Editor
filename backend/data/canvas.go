@@ -3,6 +3,7 @@ package data
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/CDavidSV/Pixio/types"
 	"github.com/CDavidSV/Pixio/utils"
@@ -119,4 +120,32 @@ func (q *Queries) GetCanvasLinkAccess(canvasID string) (types.AccessType, types.
 	var accessRole types.AccessRole
 	err := q.pool.QueryRow(context.Background(), query, canvasID).Scan(&accessType, &accessRole)
 	return accessType, accessRole, err
+}
+
+func (q *Queries) UpdateCanvas(canvasID, title, desctription string) error {
+	var values []any
+	var updates []string
+	argCount := 1
+
+	if title != "" {
+		values = append(values, title)
+		updates = append(updates, fmt.Sprintf("title = $%d", argCount))
+		argCount++
+	}
+
+	if desctription != "" {
+		values = append(values, desctription)
+		updates = append(updates, fmt.Sprintf("description = $%d", argCount))
+		argCount++
+	}
+
+	values = append(values, canvasID)
+
+	if len(updates) == 0 {
+		return nil
+	}
+
+	query := fmt.Sprintf("UPDATE canvases SET %s WHERE canvas_id = $%d", strings.Join(updates, ","), argCount)
+	_, err := q.pool.Exec(context.Background(), query, values...)
+	return err
 }
