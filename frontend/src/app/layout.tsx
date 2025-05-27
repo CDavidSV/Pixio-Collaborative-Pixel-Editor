@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import { ThemeProvider } from "./theme-provider";
-import { AppSidebar, AppSidebarHeader } from "@/components/ui/app-sidebar";
+import {
+    AppSidebarWrapper,
+} from "@/components/ui/app-sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { cookies } from "next/headers";
-import { Poppins } from "next/font/google";
+import { Pixelify_Sans, Poppins } from "next/font/google";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -18,6 +20,12 @@ const poppins = Poppins({
     variable: "--font-poppins",
 });
 
+const pixelify = Pixelify_Sans({
+    subsets: ["latin"],
+    weight: ["400", "500", "600", "700"],
+    variable: "--font-pixelify",
+});
+
 export default async function RootLayout({
     children,
 }: Readonly<{
@@ -28,7 +36,11 @@ export default async function RootLayout({
 
     return (
         <>
-            <html lang='en' className={poppins.variable} suppressHydrationWarning>
+            <html
+                lang='en'
+                className={`${poppins.variable} ${pixelify.variable}`}
+                suppressHydrationWarning
+            >
                 <head />
                 <body>
                     <ThemeProvider
@@ -38,11 +50,9 @@ export default async function RootLayout({
                         disableTransitionOnChange
                     >
                         <SidebarProvider defaultOpen={defaultOpen}>
-                            <AppSidebar />
-                            <SidebarInset>
-                                <AppSidebarHeader />
-                                <main className='pr-8 pl-12 py-4'>{children}</main>
-                            </SidebarInset>
+                            <AppSidebarWrapper>
+                                {children}
+                            </AppSidebarWrapper>
                         </SidebarProvider>
                     </ThemeProvider>
                 </body>

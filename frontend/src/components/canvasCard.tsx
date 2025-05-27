@@ -20,10 +20,10 @@ export default function CanvasCard(canvas: CanvasCardData) {
         >
             <div className={`absolute top-0 right-0 z-10 m-2 p-1 rounded-md flex items-center gap-2 bg-card/90 transition-all duration-300 ease-in-out ${hovered ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'}`}>
                 <Button variant="ghost">
-                    <Star color="white" />
+                    <Star />
                 </Button>
                 <Button variant="ghost">
-                    <EllipsisVertical color="white" />
+                    <EllipsisVertical />
                 </Button>
             </div>
             <div className='rounded-lg overflow-hidden bg-black'>
@@ -37,11 +37,7 @@ export default function CanvasCard(canvas: CanvasCardData) {
             </div>
             <p className='text-lg font-semibold mt-1.5'>{canvas.title}</p>
             <div className='flex items-center justify-start gap-1 text-sm text-muted-foreground'>
-                <p>Last edited {getRelativeTime(canvas.updatedAt)}</p>•
-                <p>
-                    {canvas.stars.toLocaleString()}{" "}
-                    {canvas.stars === 1 ? "star" : "stars"}
-                </p>
+                <p>Last edited {getRelativeTime(canvas.updatedAt)}</p>
             </div>
         </Link>
     );

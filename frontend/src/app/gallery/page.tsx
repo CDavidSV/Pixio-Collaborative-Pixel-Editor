@@ -66,7 +66,7 @@ export default function GalleryPage() {
     return (
         <div>
             <PageHeader
-                title='My Canvases'
+                title='My Gallery'
                 description='Manage your pixel art creations. Rename, duplicate, or delete your canvases with ease.'
             />
             <div className='flex items-center justify-between'>

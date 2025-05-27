@@ -8,6 +8,7 @@ import {
     SidebarGroupContent,
     SidebarGroupLabel,
     SidebarHeader,
+    SidebarInset,
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
@@ -21,17 +22,15 @@ import Link from "next/link";
 import {
     BookImage,
     Clock4,
-    Code,
-    Folder,
     Home,
     Plus,
     Star,
-    Trash2,
     UsersRound,
 } from "lucide-react";
 import { Search } from "../search";
 import { Button } from "./button";
 import Notifications from "../notifications";
+import Image from "next/image";
 
 const sidebarHiddedRoutes = ["/login", "/signup"];
 
@@ -42,10 +41,6 @@ interface SidebarItem {
 }
 
 export function AppSidebarHeader() {
-    const pathname = usePathname();
-
-    if (sidebarHiddedRoutes.includes(pathname)) return null;
-
     return (
         <header className='flex h-16 w-full shrink-0 items-center justify-between px-4'>
             <div className='flex items-center gap-2 w-full'>
@@ -71,10 +66,31 @@ export function AppSidebarHeader() {
     );
 }
 
-export function AppSidebar() {
+export function AppSidebarWrapper({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
 
-    if (sidebarHiddedRoutes.includes(pathname)) return null;
+    return (
+        <>
+            {!sidebarHiddedRoutes.includes(pathname) ? (
+                <>
+                    <AppSidebar />
+                    <SidebarInset>
+                        <AppSidebarHeader />
+                        <main className={!sidebarHiddedRoutes.includes(pathname) ? 'pr-8 pl-12 py-4' : ''}>{children}</main>
+                    </SidebarInset>
+                </>
+            ) : (
+                <main className="w-full">
+                    {children}
+                </main>
+            )}
+        </>
+    );
+
+}
+
+export function AppSidebar() {
+    const pathname = usePathname();
 
     const sidebarItems: SidebarItem[] = [
         {
@@ -113,8 +129,9 @@ export function AppSidebar() {
         <Sidebar collapsible='icon'>
             <SidebarHeader>
                 <SidebarMenu>
-                    <SidebarMenuItem>
-                        <h1 className='truncate text-foreground text-2xl transition-opacity duration-[320ms] ease-in-out group-data-[collapsible=icon]:opacity-0'>
+                    <SidebarMenuItem className="flex items-center gap-2 pl-2">
+                        <Image className="mt-1.5" src={"/logo/Pixio_Logo.webp"} width={32} height={32} alt="Pixio" />
+                        <h1 className='font-(family-name:--font-pixelify) truncate text-foreground text-2xl transition-opacity duration-[320ms] ease-in-out group-data-[collapsible=icon]:opacity-0'>
                             Pixio
                         </h1>
                     </SidebarMenuItem>

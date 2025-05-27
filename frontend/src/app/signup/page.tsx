@@ -9,8 +9,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PInput } from "@/components/ui/p-input";
-import { GalleryVerticalEnd } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 
 export const metadata = {
     title: "Signup - Snipari",
@@ -24,11 +24,9 @@ export default function SignupPage() {
             <div className='flex w-full max-w-sm flex-col gap-6'>
                 <a
                     href='#'
-                    className='flex items-center gap-2 self-center font-medium'
+                    className='flex items-center gap-2 self-center font-medium font-(family-name:--font-pixelify)'
                 >
-                    <div className='flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground'>
-                        <GalleryVerticalEnd className='size-4' />
-                    </div>
+                    <Image src={"/logo/Pixio_Logo.webp"} width={24} height={24} alt="Pixio" />
                     Pixio
                 </a>
                 <div className='flex flex-col gap-6'>
