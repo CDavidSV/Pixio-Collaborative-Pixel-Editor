@@ -130,7 +130,7 @@ export function AppSidebar() {
             <SidebarHeader>
                 <SidebarMenu>
                     <SidebarMenuItem className="flex items-center gap-2 pl-2">
-                        <Image className="mt-1.5" src={"/logo/Pixio_Logo.webp"} width={32} height={32} alt="Pixio" />
+                        <Image className="mt-0.5" src={"/logo/Pixio_Logo.webp"} width={32} height={32} alt="Pixio" />
                         <h1 className='font-(family-name:--font-pixelify) truncate text-foreground text-2xl transition-opacity duration-[320ms] ease-in-out group-data-[collapsible=icon]:opacity-0'>
                             Pixio
                         </h1>

@@ -18,7 +18,7 @@ export default function CanvasCard(canvas: CanvasCardData) {
             onPointerEnter={() => setHovered(true)}
             onPointerLeave={() => setHovered(false)}
         >
-            <div className={`absolute top-0 right-0 z-10 m-2 p-1 rounded-md flex items-center gap-2 bg-card/90 transition-all duration-300 ease-in-out ${hovered ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'}`}>
+            <div className={`absolute top-0 right-0 z-10 m-2 p-1 rounded-md flex items-center gap-2 bg-card/90 transition-all duration-300 ease-in-out ${hovered ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 delay-75'}`}>
                 <Button variant="ghost">
                     <Star />
                 </Button>
@@ -26,7 +26,11 @@ export default function CanvasCard(canvas: CanvasCardData) {
                     <EllipsisVertical />
                 </Button>
             </div>
-            <div className='rounded-lg overflow-hidden bg-black'>
+            <div className='relative rounded-lg overflow-hidden bg-black'>
+                <div className={`text-white absolute bottom-2 left-3 z-2 flex items-center transition-all duration-300 ease-in-out ${hovered ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2 delay-75'}`}>
+                    <Star size={15} className="mr-1" />
+                    <p>{canvas.stars.toLocaleString()}</p>
+                </div>
                 <Image
                     className={`w-full h-full aspect-square object-cover transition-all duration-300 ease-in-out ${hovered && 'opacity-80 shadow-2xl'}`}
                     src={canvas.image}

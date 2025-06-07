@@ -8,8 +8,7 @@ import { SearchIcon } from "lucide-react";
 
 export const metadata = {
     title: "My Gallery | Pixio",
-    description:
-        "Manage your pixel art creations. Rename, duplicate, or delete your canvases with ease.",
+    description: "Manage your pixel art creations. Rename, duplicate, or delete your canvases with ease.",
 };
 
 export default function GalleryPage() {

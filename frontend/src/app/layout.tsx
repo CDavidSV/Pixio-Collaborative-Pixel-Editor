@@ -1,17 +1,14 @@
 import type { Metadata } from "next";
 import { ThemeProvider } from "./theme-provider";
-import {
-    AppSidebarWrapper,
-} from "@/components/ui/app-sidebar";
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { AppSidebarWrapper } from "@/components/ui/app-sidebar";
+import { SidebarProvider } from "@/components/ui/sidebar";
 import { cookies } from "next/headers";
 import { Pixelify_Sans, Poppins } from "next/font/google";
 import "./globals.css";
 
 export const metadata: Metadata = {
     title: "Pixio",
-    description:
-        "A modern pixel art editor with a focus on collaboration and simplicity.",
+    description: "A modern pixel art editor with a focus on collaboration and simplicity.",
 };
 
 const poppins = Poppins({
@@ -24,6 +21,7 @@ const pixelify = Pixelify_Sans({
     subsets: ["latin"],
     weight: ["400", "500", "600", "700"],
     variable: "--font-pixelify",
+    display: "swap",
 });
 
 export default async function RootLayout({
