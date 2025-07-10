@@ -35,12 +35,12 @@ func encodeMessage(t msg.WSMessageType, m proto.Message) ([]byte, error) {
 	return b, err
 }
 
-func sendError(client *WSClient, errMsg string) {
+func sendError(client *WSClient, msgType msg.WSMessageType, errMsg string) {
 	wsError := &msg.WSError{
 		Error: errMsg,
 	}
 
-	msgBytes, err := encodeMessage(msg.ErrorMsg, wsError)
+	msgBytes, err := encodeMessage(msgType, wsError)
 	if err != nil {
 		slog.Error("Failed to encode error message", "Error", err.Error())
 		return
@@ -57,4 +57,17 @@ func sendMessage(client *WSClient, msgType msg.WSMessageType, msg proto.Message)
 	}
 
 	client.send <- msgBytes
+}
+
+func broadcastMessage(sender *WSClient, room *Room, msg []byte) {
+	room.mu.RLock()
+	defer room.mu.RUnlock()
+	for _, c := range room.Clients {
+		// Don't send the message to the sender
+		if c.WSClient.ID == sender.ID {
+			continue
+		}
+
+		c.WSClient.send <- msg
+	}
 }

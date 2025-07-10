@@ -16,4 +16,7 @@ var (
 	ErrRoomNotFound       = errors.New("ROOM_NOT_FOUND")
 	ErrMarshallingMsg     = errors.New("MARSHALLING_ERROR")
 	ErrUnsupportedMsgType = errors.New("UNSUPPORTED_MSG_TYPE")
+	ErrFetchingUserAccess = errors.New("CANNOT_FETCH_USER_ACCESS")
+	ErrUnexpected         = errors.New("UNEXPECTED_SERVER_ERROR")
+	ErrDecodingMsg        = errors.New("ERROR_DECODING_MESSAGE")
 )

@@ -39,13 +39,6 @@ func (h *Handler) PostCreateCanvas(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) GetCanvas(w http.ResponseWriter, r *http.Request) {
 	canvasID := chi.URLParam(r, "id")
 
-	if canvasID == "" {
-		utils.WriteJSON(w, http.StatusUnauthorized, types.ErrorResponse{
-			Error: "Canvas id must be provided",
-		})
-		return
-	}
-
 	// Get access rule for the user from context
 	userAccess := r.Context().Value(utils.AccessRuleKey).(types.UserAccess)
 
@@ -56,8 +49,8 @@ func (h *Handler) GetCanvas(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.WriteJSON(w, http.StatusOK, types.Map{
-		"canvas":      canvas,
-		"access_role": userAccess.AccessRole,
+		"canvas": canvas,
+		"access": userAccess,
 	})
 }
 
@@ -85,40 +78,6 @@ func (h *Handler) DeleteCanvas(w http.ResponseWriter, r *http.Request) {
 
 	utils.WriteJSON(w, http.StatusOK, types.Map{
 		"message": "Canvas deleted successfully",
-	})
-}
-
-func (h *Handler) PostJoinCanvasRoom(w http.ResponseWriter, r *http.Request) {
-	canvasID := chi.URLParam(r, "id")
-	userID := r.Context().Value(utils.UserIDKey).(string)
-
-	// Get access rule for the user from context
-	userAccess := r.Context().Value(utils.AccessRuleKey).(types.UserAccess)
-
-	canvas, err := h.queries.GetCanvas(canvasID)
-	if err != nil {
-		utils.ServerError(w, r, err, "Failed to fetch canvas")
-		return
-	}
-
-	if err := h.websocket.JoinRoom(canvas.ID, userID, userAccess); err != nil {
-		utils.ServerError(w, r, err, "Failed to join canvas room")
-		return
-	}
-
-	utils.WriteJSON(w, http.StatusOK, types.Map{
-		"canvas": canvas,
-		"access": userAccess,
-	})
-}
-
-func (h *Handler) PostLeaveCanvasRoom(w http.ResponseWriter, r *http.Request) {
-	canvasID := chi.URLParam(r, "id")
-	userID := r.Context().Value(utils.UserIDKey).(string)
-
-	h.websocket.LeaveRoom(canvasID, userID)
-	utils.WriteJSON(w, http.StatusOK, types.Map{
-		"message": "Left canvas room successfully",
 	})
 }
 

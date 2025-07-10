@@ -26,7 +26,7 @@ var upgrader = websocket.Upgrader{
 type HandlerFunc func(client *WSClient, payload []byte)
 
 type Hub struct {
-	conns     map[string]*WSClient
+	conns     map[string]map[string]*WSClient // userID -> connID -> client
 	connMutex sync.RWMutex
 	queries   *data.Queries
 	services  *services.Services
@@ -37,7 +37,7 @@ type Hub struct {
 
 func NewWebsocketHub(queries *data.Queries, services *services.Services) *Hub {
 	hub := &Hub{
-		conns:    make(map[string]*WSClient),
+		conns:    make(map[string]map[string]*WSClient),
 		queries:  queries,
 		services: services,
 		handlers: make(map[string]HandlerFunc),
@@ -49,7 +49,9 @@ func NewWebsocketHub(queries *data.Queries, services *services.Services) *Hub {
 }
 
 func (h *Hub) registerHandlers() {
-	h.handlers[string(msg.MousePosUpdateMsg)] = h.UpdateCursorPosition
+	h.handlers[string(msg.MousePosUpdateMsg)] = h.updateCursorPosition
+	h.handlers[string(msg.JoinRoomMsg)] = h.joinRoom
+	h.handlers[string(msg.LeaveRoomMsg)] = h.leaveRoom
 }
 
 func (h *Hub) WSHanlder(w http.ResponseWriter, r *http.Request) {
@@ -74,11 +76,11 @@ func (h *Hub) WSHanlder(w http.ResponseWriter, r *http.Request) {
 		slog.Error("Error authenticating user", "Error", err.Error())
 
 		if errors.Is(err, ErrFailedAuth) {
-			sendError(client, err.Error())
+			sendError(client, msg.ErrorMsg, err.Error())
 		} else if errors.Is(err, ErrInvalidMsgType) {
-			sendError(client, err.Error())
+			sendError(client, msg.ErrorMsg, err.Error())
 		} else {
-			sendError(client, "UNEXPECTED_SERVER_ERROR")
+			sendError(client, msg.ErrorMsg, ErrUnexpected.Error())
 		}
 
 		conn.Close()
@@ -120,21 +122,21 @@ func (h *Hub) readPump(c *WSClient) {
 		message := &msg.WSMessage{}
 		err = proto.Unmarshal(msgData, message)
 		if err != nil {
-			sendError(c, "ERROR_DECODING_MESSAGE")
+			sendError(c, msg.ErrorMsg, ErrDecodingMsg.Error())
 		}
 
 		h.executeHandler(c, message)
 	}
 }
 
-func (h *Hub) executeHandler(client *WSClient, msg *msg.WSMessage) {
-	handler, ok := h.handlers[msg.Type]
+func (h *Hub) executeHandler(client *WSClient, message *msg.WSMessage) {
+	handler, ok := h.handlers[message.Type]
 	if !ok {
-		sendError(client, ErrUnsupportedMsgType.Error())
+		sendError(client, msg.ErrorMsg, ErrUnsupportedMsgType.Error())
 		return
 	}
 
-	handler(client, msg.Payload)
+	handler(client, message.Payload)
 }
 
 func (h *Hub) waitForAuth(conn *websocket.Conn, providedUserID string) error {
@@ -172,7 +174,11 @@ func (h *Hub) addConnection(client *WSClient) {
 	h.connMutex.Lock()
 	defer h.connMutex.Unlock()
 
-	h.conns[client.ID] = client
+	if h.conns[client.ID] == nil {
+		h.conns[client.ID] = make(map[string]*WSClient)
+	}
+
+	h.conns[client.ID][client.connID] = client
 }
 
 func (h *Hub) removeConnection(client *WSClient) {
@@ -192,11 +198,11 @@ func (h *Hub) removeConnection(client *WSClient) {
 	h.connMutex.Unlock()
 }
 
-func (h *Hub) getClient(userID string) (*WSClient, bool) {
+func (h *Hub) getClient(userID, connID string) (*WSClient, bool) {
 	h.connMutex.RLock()
 	defer h.connMutex.RUnlock()
 
-	client, ok := h.conns[userID]
+	client, ok := h.conns[userID][connID]
 	return client, ok
 }
 

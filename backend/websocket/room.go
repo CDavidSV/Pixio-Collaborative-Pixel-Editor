@@ -1,13 +1,23 @@
 package websocket
 
 import (
+	"errors"
 	"log/slog"
 	"sync"
 	"time"
 
 	"github.com/CDavidSV/Pixio/types"
 	"github.com/CDavidSV/Pixio/websocket/msg"
+	"github.com/jackc/pgx/v5"
 	"google.golang.org/protobuf/proto"
+)
+
+type LoadStatus uint16
+
+const (
+	NotLoaded LoadStatus = iota
+	Loading
+	Loaded
 )
 
 type Room struct {
@@ -19,6 +29,7 @@ type Room struct {
 	mu          sync.RWMutex
 	hub         *Hub
 	deleteTimer *time.Timer
+	loadStatus  LoadStatus
 }
 
 type ClientWithPerms struct {
@@ -26,7 +37,7 @@ type ClientWithPerms struct {
 	Perms    *types.UserAccess
 }
 
-func (r *Room) SetClient(clientID string, client *WSClient, accessRules *types.UserAccess) {
+func (r *Room) SetClient(client *WSClient, accessRules *types.UserAccess) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -35,7 +46,7 @@ func (r *Room) SetClient(clientID string, client *WSClient, accessRules *types.U
 		r.deleteTimer = nil
 	}
 
-	r.Clients[clientID] = &ClientWithPerms{
+	r.Clients[client.ID] = &ClientWithPerms{
 		WSClient: client,
 		Perms:    accessRules,
 	}
@@ -78,44 +89,17 @@ func (r *Room) deleteEmtyRoomTimer(roomID string) {
 	})
 }
 
-func (h *Hub) JoinRoom(roomID, clientID string, userAccess types.UserAccess) error {
-	canvas, err := h.queries.GetCanvas(roomID)
+func (r *Room) loadCanvasData(data []byte) {
+	r.loadStatus = Loading
+	defer func() { r.loadStatus = Loaded }()
+
+	pixelData, err := r.hub.services.CanvasService.LoadCanvas(data)
 	if err != nil {
-		return err
+		slog.Error("Failed to load canvas pixel data", "Error", err.Error())
+		return
 	}
 
-	// Check if the room already exists
-	h.roomMutex.Lock()
-	room, exists := h.rooms[canvas.ID]
-	if !exists {
-		pixelData, err := h.services.CanvasService.LoadCanvas(canvas.PixelData)
-		if err != nil {
-			h.roomMutex.Unlock()
-			slog.Error("Failed to load canvas pixel data", "Error", err.Error())
-			return err
-		}
-
-		room = &Room{
-			CanvasID:  canvas.ID,
-			Clients:   make(map[string]*ClientWithPerms),
-			Width:     canvas.Width,
-			Height:    canvas.Height,
-			PixelData: pixelData,
-			hub:       h,
-		}
-		h.rooms[canvas.ID] = room
-
-	}
-	h.roomMutex.Unlock()
-
-	client, ok := h.getClient(clientID)
-	if !ok {
-		return ErrClientNotConnected
-	}
-
-	room.SetClient(clientID, client, &userAccess)
-
-	return nil
+	r.PixelData = pixelData
 }
 
 func (h *Hub) LeaveRoom(roomID, clientID string) {
@@ -130,22 +114,80 @@ func (h *Hub) LeaveRoom(roomID, clientID string) {
 	room.RemoveClient(clientID)
 }
 
-func (h *Hub) UpdateCursorPosition(client *WSClient, payload []byte) {
+func (h *Hub) joinRoom(client *WSClient, payload []byte) {
+	joinRoom := &msg.JoinRoom{}
+	if err := proto.Unmarshal(payload, joinRoom); err != nil {
+		sendError(client, msg.JoinRoomMsg, ErrUnmarshallingMsg.Error())
+		return
+	}
+
+	userAccess, err := h.queries.GetUserAccess(joinRoom.CanvasId, types.CanvasObject, client.ID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			sendError(client, msg.JoinRoomMsg, ErrMissingPermissions.Error())
+			return
+		}
+
+		sendError(client, msg.JoinRoomMsg, ErrFetchingUserAccess.Error())
+		return
+	}
+
+	canvas, err := h.queries.GetCanvas(joinRoom.CanvasId)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			sendError(client, msg.JoinRoomMsg, ErrCanvasNotFound.Error())
+		} else {
+			sendError(client, msg.JoinRoomMsg, ErrFetchingCanvas.Error())
+		}
+		return
+	}
+
+	// Check if the room already exists
+	h.roomMutex.Lock()
+	room, exists := h.rooms[canvas.ID]
+	if !exists {
+		room = &Room{
+			CanvasID:   canvas.ID,
+			Clients:    make(map[string]*ClientWithPerms),
+			Width:      canvas.Width,
+			Height:     canvas.Height,
+			hub:        h,
+			loadStatus: NotLoaded,
+		}
+		h.rooms[canvas.ID] = room
+	}
+
+	if room.loadStatus == NotLoaded {
+		go room.loadCanvasData(canvas.PixelData)
+	}
+	h.roomMutex.Unlock()
+
+	room.SetClient(client, &userAccess)
+
+	sendMessage(client, msg.JoinRoomMsg, &msg.JoinRoomSuccess{
+		CanvasId: canvas.ID,
+		UserId:   client.ID,
+		ConnId:   client.connID,
+	})
+}
+
+func (h *Hub) leaveRoom(client *WSClient, payload []byte) {
+
+}
+
+func (h *Hub) updateCursorPosition(client *WSClient, payload []byte) {
 	mousePos := &msg.MousePosition{}
 	err := proto.Unmarshal(payload, mousePos)
 	if err != nil {
-		sendError(client, ErrUnmarshallingMsg.Error())
+		sendError(client, msg.MousePosUpdateMsg, ErrUnmarshallingMsg.Error())
 		return
 	}
 
 	room := client.GetRoom(mousePos.RoomId)
 	if room == nil {
-		sendError(client, ErrRoomNotFound.Error())
+		sendError(client, msg.MousePosUpdateMsg, ErrRoomNotFound.Error())
 		return
 	}
-
-	room.mu.RLock()
-	defer room.mu.RUnlock()
 
 	mousePosSend := &msg.MousePositionUpdate{
 		UserId: client.ID,
@@ -155,16 +197,9 @@ func (h *Hub) UpdateCursorPosition(client *WSClient, payload []byte) {
 
 	message, err := encodeMessage(msg.MousePosUpdateMsg, mousePosSend)
 	if err != nil {
-		sendError(client, ErrMarshallingMsg.Error())
+		sendError(client, msg.MousePosUpdateMsg, ErrMarshallingMsg.Error())
 		return
 	}
 
-	for _, c := range room.Clients {
-		// Don't send the message to the sender
-		if c.WSClient.ID == client.ID {
-			continue
-		}
-
-		c.WSClient.send <- message
-	}
+	broadcastMessage(client, room, message)
 }

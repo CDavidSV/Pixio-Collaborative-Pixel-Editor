@@ -28,3 +28,13 @@ message MousePositionUpdate {
     uint32 x = 2;
     uint32 y = 3;
 }
+
+message JoinRoom {
+    string canvas_id = 1;
+}
+
+message JoinRoomSuccess {
+    string canvas_id = 1;
+    string user_id = 2;
+    string conn_id = 3;
+}

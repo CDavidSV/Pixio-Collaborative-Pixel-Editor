@@ -281,6 +281,110 @@ func (x *MousePositionUpdate) GetY() uint32 {
 	return 0
 }
 
+type JoinRoom struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	CanvasId      string                 `protobuf:"bytes,1,opt,name=canvas_id,json=canvasId,proto3" json:"canvas_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *JoinRoom) Reset() {
+	*x = JoinRoom{}
+	mi := &file_websocket_msg_messages_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *JoinRoom) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*JoinRoom) ProtoMessage() {}
+
+func (x *JoinRoom) ProtoReflect() protoreflect.Message {
+	mi := &file_websocket_msg_messages_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use JoinRoom.ProtoReflect.Descriptor instead.
+func (*JoinRoom) Descriptor() ([]byte, []int) {
+	return file_websocket_msg_messages_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *JoinRoom) GetCanvasId() string {
+	if x != nil {
+		return x.CanvasId
+	}
+	return ""
+}
+
+type JoinRoomSuccess struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	CanvasId      string                 `protobuf:"bytes,1,opt,name=canvas_id,json=canvasId,proto3" json:"canvas_id,omitempty"`
+	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	ConnId        string                 `protobuf:"bytes,3,opt,name=conn_id,json=connId,proto3" json:"conn_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *JoinRoomSuccess) Reset() {
+	*x = JoinRoomSuccess{}
+	mi := &file_websocket_msg_messages_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *JoinRoomSuccess) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*JoinRoomSuccess) ProtoMessage() {}
+
+func (x *JoinRoomSuccess) ProtoReflect() protoreflect.Message {
+	mi := &file_websocket_msg_messages_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use JoinRoomSuccess.ProtoReflect.Descriptor instead.
+func (*JoinRoomSuccess) Descriptor() ([]byte, []int) {
+	return file_websocket_msg_messages_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *JoinRoomSuccess) GetCanvasId() string {
+	if x != nil {
+		return x.CanvasId
+	}
+	return ""
+}
+
+func (x *JoinRoomSuccess) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *JoinRoomSuccess) GetConnId() string {
+	if x != nil {
+		return x.ConnId
+	}
+	return ""
+}
+
 var File_websocket_msg_messages_proto protoreflect.FileDescriptor
 
 const file_websocket_msg_messages_proto_rawDesc = "" +
@@ -300,7 +404,13 @@ const file_websocket_msg_messages_proto_rawDesc = "" +
 	"\x13MousePositionUpdate\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\f\n" +
 	"\x01x\x18\x02 \x01(\rR\x01x\x12\f\n" +
-	"\x01y\x18\x03 \x01(\rR\x01yB\x11Z\x0f./websocket;msgb\x06proto3"
+	"\x01y\x18\x03 \x01(\rR\x01y\"'\n" +
+	"\bJoinRoom\x12\x1b\n" +
+	"\tcanvas_id\x18\x01 \x01(\tR\bcanvasId\"`\n" +
+	"\x0fJoinRoomSuccess\x12\x1b\n" +
+	"\tcanvas_id\x18\x01 \x01(\tR\bcanvasId\x12\x17\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x17\n" +
+	"\aconn_id\x18\x03 \x01(\tR\x06connIdB\x11Z\x0f./websocket;msgb\x06proto3"
 
 var (
 	file_websocket_msg_messages_proto_rawDescOnce sync.Once
@@ -314,13 +424,15 @@ func file_websocket_msg_messages_proto_rawDescGZIP() []byte {
 	return file_websocket_msg_messages_proto_rawDescData
 }
 
-var file_websocket_msg_messages_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_websocket_msg_messages_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_websocket_msg_messages_proto_goTypes = []any{
 	(*WSMessage)(nil),           // 0: msg.WSMessage
 	(*Auth)(nil),                // 1: msg.Auth
 	(*WSError)(nil),             // 2: msg.WSError
 	(*MousePosition)(nil),       // 3: msg.MousePosition
 	(*MousePositionUpdate)(nil), // 4: msg.MousePositionUpdate
+	(*JoinRoom)(nil),            // 5: msg.JoinRoom
+	(*JoinRoomSuccess)(nil),     // 6: msg.JoinRoomSuccess
 }
 var file_websocket_msg_messages_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type
@@ -341,7 +453,7 @@ func file_websocket_msg_messages_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_websocket_msg_messages_proto_rawDesc), len(file_websocket_msg_messages_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   5,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

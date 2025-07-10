@@ -124,8 +124,8 @@ type CreateCanvasDTO struct {
 }
 
 type UserAccess struct {
-	ObjectID       string     `json:"object_id"`
-	ObjectType     ObjectType `json:"object_type"`
+	ObjectID       string     `json:"-"`
+	ObjectType     ObjectType `json:"-"`
 	UserID         string     `json:"user_id"`
 	AccessRole     AccessRole `json:"access_role"`
 	LastModifiedAt time.Time  `json:"last_modified_at"`
